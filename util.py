@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from osgeo import ogr, osr
 import elasticsearch
 import lightweight_water_mask
-import dateutil.parser
+from dateutil import parser
 import pytz
 
 #logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
