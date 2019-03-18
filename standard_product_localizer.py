@@ -29,8 +29,8 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 logger.setLevel(logging.INFO)
 logger.addFilter(LogFilter())
 
-
-IFG_CFG_ID_TMPL = "ifg-cfg_R{}_M{:d}S{:d}_TN{:03d}_{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}"
+#"match_pattern": "/(?P<id>S1-GUNW-ifg-cfg-RM-M\\w+S\\w+-TN\\w+-\\d{8}T\\d{6}-\\d{8}T\\d{6}-poeorb-\\w{4})$"
+IFG_CFG_ID_TMPL = "S1-GUNW-ifg-cfg-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}"
 SLC_RE = re.compile(r'(?P<mission>S1\w)_IW_SLC__.*?' +
                     r'_(?P<start_year>\d{4})(?P<start_month>\d{2})(?P<start_day>\d{2})' +
                     r'T(?P<start_hour>\d{2})(?P<start_min>\d{2})(?P<start_sec>\d{2})' +
@@ -501,6 +501,7 @@ def check_all_job_completed(job_info):
 	    break
     return all_done
 
+
 def get_dem_type(info):
     """Get dem type."""
 
@@ -508,21 +509,26 @@ def get_dem_type(info):
 
     dems = {}
     for id in info:
-	dem_type = "SRTM+v3"
+        dem_type = "SRTM+v3"
         h = info[id]
         fields = h["_source"]
-	try:
-	    if 'city' in fields:
-	        if fields['city'][0]['country_name'] is not None and fields['city'][0]['country_name'].lower() == "united states":
-                    dem_type="Ned1"
-                dems.setdefault(dem_type, []).append(id)
-	except:
-	    dem_type = "SRTM+v3"
+        try:
+            if 'city' in fields:
+                for city in fields['city']:
+                    if city['country_name'] is not None:
+                        if city['country_name'].lower() == "united states":
+                            dem_type="Ned1"
+                            print("Found city in US : %s. So dem type is ned" %fields['city'][0]['country_name'].lower())
+                            break
+                    else:
+                        print("fields['city'][0]['country_name'] is None")
+        except:
+            dem_type = "SRTM+v3"
+        if dem_type.upper().startswith("NED"):
+            break
 
-    if len(dems) != 1:
-	logger.info("There are more than one type of dem, so selecting SRTM+v3")
-	dem_type = "SRTM+v3"
     return dem_type
+
 
 
 def get_orbit_from_ids(ids, scene_type="slc"):
@@ -536,6 +542,7 @@ def get_orbit_from_metadata(mds):
     """Get orbit for a set of SLC ids. They need to belong to the same day."""
 
     day_dt, all_dts, mission = util.get_date_from_metadata(mds)
+    logger.info("get_orbit_from_metadata : day_dt %s, all_dts %s, mission %s" %(day_dt, all_dts, mission))
     return fetch("%s.0" % all_dts[0].isoformat(), "%s.0" % all_dts[-1].isoformat(),
                  mission=mission, dry_run=True)
 
@@ -595,8 +602,11 @@ def publish_data( acq_info, project, job_priority, dem_type, track,starttime, en
     slave_orbit_url = get_orbit_from_metadata(slave_md)
     logger.info("slave_orbit_url: {}".format(slave_orbit_url))
 
-    dem_type = get_dem_type(master_md)
-   
+    try:
+        dem_type = get_dem_type(master_md)
+    except:
+        pass
+ 
     slc_master_dt, slc_slave_dt = util.get_scene_dates_from_metadata(master_md, slave_md) 
     
 
@@ -653,7 +663,6 @@ def publish_data( acq_info, project, job_priority, dem_type, track,starttime, en
     md['master_zip_url'] = master_zip_url
     md['slave_zip_url'] = slave_zip_url
     md['localize_urls'] = localize_urls
-    md['dem_type'] = dem_type
     md['slc_master_dt'] = slc_master_dt.strftime('%Y%m%dT%H%M%S')
     md['slc_slave_dt'] = slc_slave_dt.strftime('%Y%m%dT%H%M%S')
     md["master_zip_file"] = [os.path.basename(i) for i in master_zip_url]

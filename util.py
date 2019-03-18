@@ -5,7 +5,9 @@ from xml.etree import ElementTree
 #from hysds_commons.job_utils import resolve_hysds_job
 #from hysds.celery import app
 from UrlUtils import UrlUtils
-from shapely.geometry import Polygon
+import hashlib
+import shapely
+from shapely.geometry import shape, Polygon, MultiPolygon, mapping
 from shapely.ops import cascaded_union
 import datetime
 import dateutil.parser
@@ -14,12 +16,23 @@ from datetime import datetime, timedelta
 from osgeo import ogr, osr
 import elasticsearch
 import lightweight_water_mask
-from dateutil import parser
 import pytz
+from dateutil import parser
 
-#logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
-#logger.setLevel(logging.INFO)
-#logger.addFilter(LogFilter())
+'''
+log_format = "[%(asctime)s: %(levelname)s/%(name)s/%(funcName)s] %(message)s"
+logging.basicConfig(format=log_format, level=logging.INFO)
+
+class LogFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'id'): record.id = '--'
+        return True
+
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+logger.setLevel(logging.INFO)
+logger.addFilter(LogFilter())
+'''
+
 log_format = "[%(asctime)s: %(levelname)s/%(funcName)s] %(message)s"
 logging.basicConfig(format=log_format, level=logging.INFO)
 
@@ -31,6 +44,7 @@ class LogFilter(logging.Filter):
 logger = logging.getLogger('util')
 logger.setLevel(logging.INFO)
 logger.addFilter(LogFilter())
+
 
 DATE_RE = re.compile(r'(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}).*$')
 
@@ -64,12 +78,13 @@ MISSION = 'S1A'
 
 class ACQ:
     def __init__(self, acq_id, download_url, tracknumber, location, starttime, endtime, direction, orbitnumber, identifier, pv, platform = None  ):
+        print("ACQ : %s %s %s" %(acq_id, starttime, endtime))
         self.acq_id=acq_id,
         self.download_url = download_url
         self.tracknumber = tracknumber
         self.location= location
-        self.starttime = starttime
-        self.endtime = endtime
+        self.starttime = get_time_str(starttime)
+        self.endtime = get_time_str(endtime)
         self.pv = pv
         self.direction = direction
         self.orbitnumber = orbitnumber
@@ -96,6 +111,8 @@ logger.setLevel(logging.INFO)
 logger.addFilter(LogFilter())
 
 
+
+
 BASE_PATH = os.path.dirname(__file__)
 MOZART_ES_ENDPOINT = "MOZART"
 GRQ_ES_ENDPOINT = "GRQ"
@@ -104,10 +121,12 @@ def print_acq(acq):
     print("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s" %(acq.acq_id, acq.download_url, acq.tracknumber, acq.location, acq.starttime, acq.endtime, acq.direction, acq.orbitnumber, acq.identifier, acq.pv))
 
 def group_acqs_by_orbit_number_from_metadata(frames):
+    print("group_acqs_by_orbit_number_from_metadata")
     return group_acqs_by_orbit_number(create_acqs_from_metadata(frames))
 
 def group_acqs_by_track_date_from_metadata(frames):
-    return group_acqs_by_track_date(create_acqs_from_metadata(frames))
+    logger.info("group_acqs_by_track_date_from_metadata")
+    return group_acqs_by_track_multi_date(create_acqs_from_metadata(frames))
 
 def group_acqs_by_track_date(acqs):
     print("\ngroup_acqs_by_track_date")
@@ -129,6 +148,44 @@ def group_acqs_by_track_date(acqs):
         #bisect.insort(grouped.setdefault(fields['metadata']['track_number'], {}).setdefault(day_dt, []), h['_id'])
         bisect.insort(grouped.setdefault(acq.tracknumber, {}).setdefault(day_dt, []), acq.acq_id)
     return {"grouped": grouped, "acq_info" : acqs_info}
+
+def group_acqs_by_track_multi_date(acqs):
+    print("\ngroup_acqs_by_track_multi_date")
+    grouped = {}
+    acqs_info = {}
+    for acq in acqs:
+        acqs_info[acq.acq_id] = acq
+        match = SLC_RE.search(acq.identifier)
+
+        if not match:
+            raise RuntimeError("Failed to recognize SLC ID %s." % h['_id'])
+        print("group_acqs_by_track_multi_date : Year : %s Month : %s Day : %s" %(int(match.group('start_year')), int(match.group('start_month')), int(match.group('start_day'))))
+
+        day_dt = datetime(int(match.group('start_year')),
+                          int(match.group('start_month')),
+                          int(match.group('start_day')),
+                          0, 0, 0)
+        print("day_dt : %s " %day_dt)
+        day_dt_yesterday = day_dt + timedelta(days=-1)
+        day_dt_tomorrow = day_dt + timedelta(days=1)
+        print("day_dt_yesterday : %s " %day_dt_yesterday)
+        print("day_dt_tomorrow : %s" %day_dt_tomorrow)
+        if acq.tracknumber in grouped.keys():
+            print("acq.tracknumber : %s grouped[acq.tracknumber].keys() : %s " %(acq.tracknumber, grouped[acq.tracknumber].keys()))
+            for d in  grouped[acq.tracknumber].keys():
+                if d == day_dt_yesterday:
+                    print("day_dt_yesterday exists. updating day_dt to day_dt_yesterday")
+                    day_dt = day_dt_yesterday
+                elif d == day_dt_tomorrow:
+                    print("day_dt_tomorrow exists. updating day_dt to day_dt_tomorrow")
+                    day_dt = day_dt_tomorrow
+
+        #print("start_date : %s" %datetime.strptime(acq.starttime, '%Y-%m-%d'))
+        #bisect.insort(grouped.setdefault(fields['metadata']['track_number'], {}).setdefault(day_dt, []), h['_id'])
+        bisect.insort(grouped.setdefault(acq.tracknumber, {}).setdefault(day_dt, []), acq.acq_id)
+    return {"grouped": grouped, "acq_info" : acqs_info}
+
+
 
 def group_acqs_by_orbit_number(acqs):
     #print(acqs)
@@ -153,14 +210,119 @@ def group_acqs_by_orbit_number(acqs):
 
 
 
-def update_acq_pv(acq_id, pv):
-    pass
+def update_acq_pv(id, ipf_version):
+    try:
+        uu = UrlUtils()
+        es_url = uu.rest_url
+        #es_index = "grq_*_{}".format(index_suffix.lower())
+        es_index = "grq_v2.0_acquisition-s1-iw_slc"
+        _type = "acquisition-S1-IW_SLC"
+        ES = elasticsearch.Elasticsearch(es_url)
+
+
+        ES.update(index=es_index, doc_type=_type, id=id,
+              body={"doc": {"metadata": {"processing_version": ipf_version}}}) 
+        print("Updated IPF %s of acq %s successfully" %(id, ipf_version))    
+    except Exception as err:
+        logger.info("ERROR : updationg ipf : %s" %str(err))
 
 
 def import_file_by_osks(url):
     osaka.main.get(url)
 
+def check_prod_avail(session, link):
+    """
+    check if product is currently available or in long time archive
+    :param session:
+    :param link:
+    :return:
+    """
 
+    product_url = "{}$value".format(link)
+    response = session.get(product_url, verify=False)
+    return response.status_code
+
+
+def get_scihub_manifest(session, info):
+    """Get manifest information."""
+
+    # disable extraction of manifest (takes too long); will be
+    # extracted when needed during standard product pipeline
+
+    # logger.info("info: {}".format(json.dumps(info, indent=2)))
+    manifest_url = "{}Nodes('{}')/Nodes('manifest.safe')/$value".format(info['met']['alternative'],
+                                                                             info['met']['filename'])
+    manifest_url2 = manifest_url.replace('/apihub/', '/dhus/')
+    for url in (manifest_url2, manifest_url):
+        response = session.get(url, verify=False)
+        logger.info("url: %s" % response.url)
+        if response.status_code == 200:
+            break
+    response.raise_for_status()
+    return response.content
+
+
+def get_scihub_namespaces(xml):
+    """Take an xml string and return a dict of namespace prefixes to
+       namespaces mapping."""
+
+    nss = {}
+    matches = re.findall(r'\s+xmlns:?(\w*?)\s*=\s*[\'"](.*?)[\'"]', xml)
+    for match in matches:
+        prefix = match[0]; ns = match[1]
+        if prefix == '': prefix = '_default'
+        nss[prefix] = ns
+    return nss
+
+
+def get_scihub_ipf(manifest):
+    # append processing version (ipf)
+    ns = get_scihub_namespaces(manifest)
+    x = fromstring(manifest)
+    ipf = x.xpath('.//xmlData/safe:processing/safe:facility/safe:software/@version', namespaces=ns)[0]
+
+    return ipf
+
+
+def get_dataset_json(met, version):
+    """Generated HySDS dataset JSON from met JSON."""
+
+    return {
+        "version": version,
+        "label": met['id'],
+        "location": met['location'],
+        "starttime": met['sensingStart'],
+        "endtime": met['sensingStop'],
+    }
+
+
+def extract_scihub_ipf(met):
+    user = None
+    password = None
+
+    # get session
+    session = requests.session()
+    if None not in (user, password): session.auth = (user, password)
+
+    ds = get_dataset_json(met, version="v2.0")
+
+    info = {
+        'met': met,
+        'ds': ds
+    }
+
+    prod_avail = check_prod_avail(session, info['met']['alternative'])
+    if prod_avail == 200:
+        manifest = get_scihub_manifest(session, info)
+    elif prod_avail == 202:
+        logger.info("Got 202 from SciHub. Product moved to long term archive.")
+        raise Exception("Got 202. Product moved to long term archive.")
+    else:
+        logger.info("Got code {} from SciHub".format(prod_avail))
+        raise Exception("Got code {}".format(prod_avail))
+
+    ipf = get_scihub_ipf(manifest)
+    return ipf
 
 def get_area(coords):
     '''get area of enclosed coordinates- determines clockwise or counterclockwise order'''
@@ -208,8 +370,12 @@ def get_ipf_count(acqs):
         else:
             pv = get_processing_version(acq.identifier)
             if pv:
-                update_acq_pv(acq.acq_id, acq.pv)
+                update_acq_pv(acq.acq_id, pv)
                 pv_list.append(pv)
+            else:
+                err_msg = "IPF version NOT found for %s" %acq.acq_id
+                print(err_msg)
+                raise RuntimeError(err_msg)
 
     return len(list(set(pv_list)))
 
@@ -259,8 +425,8 @@ def create_acq_obj_from_metadata(acq):
     acq_data = acq #acq['fields']['partial'][0]
     missing_pcv_list = list()
     acq_id = acq['id']
-    print("logger level : %s" %logger.level)
-    print("Creating Acquisition Obj for acq_id : %s : %s" %(type(acq_id), acq_id))
+    logger.info("logger level : %s" %logger.level)
+    logger.info("Creating Acquisition Obj for acq_id : %s : %s" %(type(acq_id), acq_id))
     '''
     match = SLC_RE.search(acq_id)
     if not match:
@@ -282,13 +448,21 @@ def create_acq_obj_from_metadata(acq):
     pv = None
     if "processing_version" in  acq_data['metadata']:
         pv = acq_data['metadata']['processing_version']
-        print("pv found in metadata : %s" %pv)
+        if pv:
+            logger.info("pv found in metadata : %s" %pv)
+        else:
+            logger.info("pv NOT in metadata,so calling ASF")
+            pv = get_processing_version(identifier, acq_data['metadata'])
+            logger.info("ASF returned pv : %s" %pv)
+            if pv:
+                update_acq_pv(acq_id, pv)
     else:
         missing_pcv_list.append(acq_id)
-        print("pv NOT in metadata,so calling ASF")
-        pv = get_processing_version(identifier)
-        #print("ASF returned pv : %s" %pv)
-        #update_acq_pv(acq_id, pv) 
+        logger.info("pv NOT in metadata,so calling ASF")
+        pv = get_processing_version(identifier, acq_data['metadata'])
+        logger.info("ASF returned pv : %s" %pv)
+        if pv:
+            update_acq_pv(acq_id, pv) 
     return ACQ(acq_id, download_url, track, location, starttime, endtime, direction, orbitnumber, identifier, pv, platform)
 
 
@@ -302,11 +476,14 @@ def create_acqs_from_metadata(frames):
             acqs.append(acq_obj)
     return acqs
 
-def get_result_dict():
+def get_result_dict(aoi=None, track=None, track_dt=None):
     result = {}
-    result['aoi'] = None
-    result['track'] = None
-    result['dt']  = None
+    result['aoi'] = aoi
+    result['track'] = track
+    result['orbit_name']=None
+    #result['secondary_orbit']=None
+    #result['primary_track_dt']  = None
+    #result['secondary_track_dt']  = None
     result['acq_union_land_area'] = None
     result['acq_union_aoi_intersection'] = None
     result['ACQ_POEORB_AOI_Intersection'] = None   
@@ -317,11 +494,69 @@ def get_result_dict():
     result['WATER_MASK_PASSED'] = None
     result['matched'] = None
     result['BL_PASSED'] = None
-    result['master_ipf_count'] = None
-    result['slave_ipf_count'] = None
+    result['primary_ipf_count'] = None
+    result['secondary_ipf_count'] = None
     result['candidate_pairs'] = None
-
+    result['fail_reason'] = ''
+    result['comment'] = ''
+    result['dt']=track_dt
+    result['result']=None
+    result['union_geojson']=None
+    result['delta_area']=None
+    result['orbit_quality_check_passed']=None
+    result['area_threshold_passed'] = None
+    result['list_master_dt'] = None
+    result['list_slave_dt'] = None
+    result['master_count'] = 0
+    result['slave_count'] = 0
+    result['master_orbit_file'] = ''
+    result['slave_orbit_file'] = ''
+    '''
+    result['ACQ_POEORB_AOI_Intersection_primary'] = None
+    result['ACQ_Union_POEORB_Land_primary'] = None
+    result['ACQ_POEORB_AOI_Intersection_secondary'] = None
+    result['ACQ_Union_POEORB_Land_secondary'] = None
+    result['Track_POEORB_Land_secondary'] = None
+    result['Track_AOI_Intersection_secondary'] = None
+    result['Track_POEORB_Land_secondary'] = None
+    result['Track_AOI_Intersection_secondary'] = None    
+    '''
     return result
+
+
+def get_ifg_hash(master_acqs,  slave_acqs, track, aoi_name):
+
+    master_ids_str=""
+    slave_ids_str=""
+
+    for acq in sorted(master_acqs):
+        logger.info("get_ifg_hash : master acq : %s" %acq)
+        if isinstance(acq, tuple) or isinstance(acq, list):
+            acq = acq[0]
+
+        if master_ids_str=="":
+            master_ids_str= acq
+        else:
+            master_ids_str += " "+acq
+
+    for acq in sorted(slave_acqs):
+        logger.info("get_ifg_hash: slave acq : %s" %acq)
+        if isinstance(acq, tuple) or isinstance(acq, list):
+            acq = acq[0]
+        
+        if slave_ids_str=="":
+            slave_ids_str= acq
+        else:
+            slave_ids_str += " "+acq
+  
+    id_hash = hashlib.md5(json.dumps([
+            master_ids_str,
+            slave_ids_str,
+            track,
+            aoi_name]).encode("utf8")).hexdigest()
+    return id_hash
+
+
 
 def dataset_exists(id, index_suffix):
     """Query for existence of dataset by ID."""
@@ -731,22 +966,60 @@ def find_overlap_within_aoi(loc1, loc2, aoi_loc):
     '''returns True if there is any overlap between the two geojsons. The geojsons
     are just a list of coordinate tuples'''
     print("find_overlap_within_aoi : %s\n%s\n%s" %(loc1, loc2, aoi_loc))
-    geojson1 = get_intersection(loc1, aoi_loc)
-    geojson2 = get_intersection(loc1, aoi_loc)
+    geojson1, env1 = get_intersection(loc1, aoi_loc)
+    geojson2, env2 = get_intersection(loc2, aoi_loc)
+
+     
     p3=0
-    print("find_overlap_within_aoi : geojson1 : %s\n geojson2 : %s" %(geojson1, geojson2))
+    intersects = False
     if type(geojson1) is tuple:
         geojson1 = geojson1[0]
     if type(geojson2) is tuple:
         geojson2 = geojson2[0]
 
-    p1=Polygon(geojson1["coordinates"][0])
-    p2=Polygon(geojson2["coordinates"][0])
+    print("geojson1['type'] : %s geojson1['coordinates'] : %s" %(geojson1['type'],geojson1["coordinates"]))
+    print("geojson2['type'] : %s geojson1['coordinates'] : %s" %(geojson2['type'],geojson2["coordinates"]))
+    if geojson1['type'] == "MultiPolygon" and geojson2['type'] == "MultiPolygon":
+        for cord1 in geojson1["coordinates"]:
+            for cord2 in geojson2["coordinates"]:
+                p3 = p3+get_intersection_area(cord1[0], cord2[0])
+    elif geojson1['type'] == "MultiPolygon" and geojson2['type'] == "Polygon":
+        for cord1 in geojson1["coordinates"]:
+            p3 = p3+get_intersection_area(cord1[0], geojson2["coordinates"][0])
+    elif geojson1['type'] == "Polygon" and geojson2['type'] == "MultiPolygon":
+        for cord2 in geojson2["coordinates"]:
+            p3 = p3+get_intersection_area(geojson1["coordinates"][0], cord2[0])
+    elif geojson1['type'] == "Polygon" and geojson2['type'] == "Polygon":
+        p3 = get_intersection_area(geojson1["coordinates"][0], geojson2["coordinates"][0])
+    else:
+        raise ValueError("Unknown Polygon Type : %s and %s" %(geojson1['type'], geojson2['type']))
+    
+    if p3>0:
+        intersects = True
+    if p3>1.0:
+        logger.info("ERROR : Intersection value between %s and %s is too high : %s" %(geojson1["coordinates"], geojson2["coordinates"], p3)) 
+    return intersects, p3
+
+
+def get_intersection_area(cord1, cord2):
+
+    print("\nget_intersection_area between %s and %s" %(cord1, cord2))
+    p3 =0
+
+    
+    p1=Polygon(cord1)
+    p2=Polygon(cord2)
     if p1.intersects(p2):
+        intersection = p1.intersection(p2)
+        print("intersection : %s" %intersection)
+        intersection_land_area = lightweight_water_mask.get_land_area(intersection)
+        p1_land_area = lightweight_water_mask.get_land_area(p1)
+        print("intersection_land_area : %s p1_land_area : %s" %(intersection_land_area,p1_land_area))
         p3 = p1.intersection(p2).area/p1.area
-    return p1.intersects(p2), p3
-
-
+        print("\n%s intersects %s with area : %s\n" %(p1, p2, p3))
+        p3 = intersection_land_area/p1_land_area
+        print("updated_land_area : %s" %p3)
+    return p3
 
 def is_within(geojson1, geojson2):
     '''returns True if there is any overlap between the two geojsons. The geojsons
@@ -759,22 +1032,28 @@ def is_within(geojson1, geojson2):
 def find_overlap_match(master_acq, slave_acqs):
     #print("\n\nmaster info : %s : %s : %s :%s" %(master_acq.tracknumber, master_acq.orbitnumber, master_acq.pv, master_acq.acq_id))
     #print("slave info : ")
+
+    total_cover_pct=0
+    logger.info("\n\n\nfind_overlap_match:")
     master_loc = master_acq.location["coordinates"]
 
-    #print("\n\nmaster_loc : %s" %master_loc)
+    print("\n\nmaster id : %s master loc : %s" %(master_acq.acq_id, master_acq.location))
     overlapped_matches = {}
     for slave in slave_acqs:
+        overlap = 0
+        is_over = False
         print("SLAVE : %s" %slave.location)
         slave_loc = slave.location["coordinates"]
-        #print("\n\nslave_loc : %s" %slave_loc)
+        print("\n\nslave_loc : %s" %slave_loc)
         is_over, overlap = is_overlap(master_loc, slave_loc)
         print("is_overlap : %s" %is_over)
         print("overlap area : %s" %overlap)
         if is_over:
             overlapped_matches[slave.acq_id] = slave
+            total_cover_pct = total_cover_pct + overlap
             print("Overlapped slave : %s" %slave.acq_id)
 
-    return overlapped_matches
+    return overlapped_matches, total_cover_pct
 
 def ref_truncated(ref_scene, matched_footprints, covth=.99):
     """Return True if reference scene will be truncated."""
@@ -871,23 +1150,40 @@ def get_acq_orbit_polygon(starttime, endtime, orbit_dir):
     pass
     
 def get_intersection(js1, js2):
+    print("GET_INTERSECTION")
     intersection = None
+    poly_type = None
     try:
-        print("intersection between :\n %s\nAND\n%s\n\n" %(js1, js2))
+        print("intersection between :\n %s\nAND\n%s\n" %(js1, js2))
         poly1 = ogr.CreateGeometryFromJson(json.dumps(js1, indent=2, sort_keys=True))
-        print("\n\npoly1 : %s\n\n" %poly1)
-
+        print("\nget_intersection : poly1 : %s" %poly1)
 
         poly2 = ogr.CreateGeometryFromJson(json.dumps(js2, indent=2, sort_keys=True))
-        print("\n\npoly2 : %s\n\n" %poly2)
+        print("\nget_intersection : poly2 : %s" %poly2)
     
         intersection = poly1.Intersection(poly2)
+        print("\nget_intersection : intersection : %s" %intersection)
     except Exception as err:
         err_value = "Error intersecting two polygon : %s" %str(err)
         print(err_value)
         raise RuntimeError(err_value)
+    if isinstance(intersection, shapely.geometry.polygon.Polygon):
+        poly_type = "POLYGON"
+    if isinstance(intersection, shapely.geometry.multipolygon.MultiPolygon):
+        poly_type = "MULTIPOLYGON"
+    print("\nSHAPELY poly_type : %s" %poly_type)
+   
 
-    return True, json.loads(intersection.ExportToJson()), intersection.GetEnvelope()
+    if intersection.IsEmpty():
+        print("intersection is empty : %s" %intersection)
+        err_msg = "util.get_intersection: intersection between %s and %s is %s" %(js1, js2, intersection)
+        raise RuntimeError(err_msg)
+
+    if intersection is None or intersection == 'GEOMETRYCOLLECTION EMPTY':
+        err_msg = "util.get_intersection: intersection between %s and %s is %s" %(js1, js2, intersection)
+        raise RuntimeError(err_msg)
+   
+    return json.loads(intersection.ExportToJson()), intersection.GetEnvelope()
 
 def get_combined_polygon():
     pass
@@ -900,18 +1196,52 @@ def get_time(t):
     logger.info("returning : %s" %t1)
     return t1
 
+def get_time_str(t):
 
-def get_processing_version(slc):
-    pv = get_processing_version_from_scihub(slc)
-    if not pv:
-        pv = get_processing_version_from_asf(slc)
+    logger.info("get_time(t) : %s" %t)
+    t = parser.parse(t).strftime('%Y-%m-%dT%H:%M:%S')
+    return t
+
+
+def get_time_str_with_format(t, str_format):
+
+    logger.info("get_time(t) : %s" %t)
+    t = parser.parse(t).strftime(str_format)
+    return t
+
+def change_date_str_format(date_str, pre_format, post_format):
+    try:
+        t = datetime.strptime(date_str, pre_format)
+        return parser.parse(t).strftime(t, post_format)
+    except:
+        return date_str
+
+def get_processing_version(slc, met = None):
+    pv = None
+    print("get_processing_version : %s" %slc)    
+    try:
+        if met:
+            try:
+                pv = get_processing_version_from_scihub(slc, met)
+                print("pv from scihub : %s" %pv)
+            except Exception as err:
+                print("Failed to get pv from scihub for %s : %s" %(slc, str(err)))
+        if not pv:
+            pv = get_processing_version_from_asf(slc)
+            print("pv from asf : %s" %pv)
+    except Exception as err:
+        print("Error getting IPF : %s" %str(err))
     return pv
 
-def get_processing_version_from_scihub(slc):
+def get_processing_version_from_scihub(slc, met = None):
 
     ipf_string = None
-
+    '''
+    if met:
+        ipf_string = extract_scihub_ipf(met)
+    '''
     return ipf_string
+
 
 def get_processing_version_from_asf(slc):
 
@@ -919,7 +1249,9 @@ def get_processing_version_from_asf(slc):
 
     try:
         # query the asf search api to find the download url for the .iso.xml file
+        #request_string = "https://api.daac.asf.alaska.edu/services/search/param?platform=SA,SB&processingLevel=METADATA_SLC&granule_list=S1B_IW_SLC__1SDV_20190221T151817_20190221T151844_015046_01C1D6_240D&output=json"
         request_string = 'https://api.daac.asf.alaska.edu/services/search/param?platform=SA,SB&processingLevel=METADATA_SLC&granule_list=%s&output=json' %slc
+        print("get_processing_version_from_asf : request_string : %s" %request_string)
         response = requests.get(request_string)
 
         response.raise_for_status()
@@ -935,9 +1267,14 @@ def get_processing_version_from_asf(slc):
         ipf_string = root.find('gmd:composedOf/gmd:DS_DataSet/gmd:has/gmi:MI_Metadata/gmd:dataQualityInfo/gmd:DQ_DataQuality/gmd:lineage/gmd:LI_Lineage/gmd:processStep/gmd:LI_ProcessStep/gmd:description/gco:CharacterString', ns).text
 
         if ipf_string:
+            print("get_processing_version_from_asf : ipf_string : %s" %ipf_string)
             ipf = ipf_string.split('version')[1].split(')')[0].strip()
+            print("get_processing_version_from_asf : ipf_string : %s" %ipf)
+        else:
+            print("get_processing_version_from_asf : ipf_string is NONE")
     except Exception as err:
-        print("get_processing_version_from_asf : %s" %str(err))
+        print("get_processing_version_from_asf ERROR: %s" %str(err))
+        raise
  
         
     return ipf
@@ -973,6 +1310,25 @@ def get_track(info):
         
         raise RuntimeError("Failed to find SLCs for only 1 track : %s" %tracks)
     return track
+
+def get_start_end_time(info):
+    starttimes = []
+    endtimes = []
+    for id in info:
+        h = info[id]
+        fields = h["_source"]
+        starttimes.append(fields['starttime'])
+        endtimes.append(fields['endtime'])
+    return sorted(starttimes)[0], sorted(endtimes)[-1]
+
+def get_start_end_time2(acq_info, acq_ids):
+    starttimes = []
+    endtimes = []
+    for acq_id in acq_ids:
+        acq = acq_info[acq_id]
+        starttimes.append(get_time(acq.starttime))
+        endtimes.append(get_time(acq.endtime))
+    return sorted(starttimes)[0], sorted(endtimes)[-1]
 
 def get_bool_param(ctx, param):
     """Return bool param from context."""
@@ -1028,15 +1384,19 @@ def get_dem_type(info):
         fields = h["_source"]
         try:
             if 'city' in fields:
-                if fields['city'][0]['country_name'] is not None and fields['city'][0]['country_name'].lower() == "united states":
-                    dem_type="Ned1"
-                dems.setdefault(dem_type, []).append(id)
+                for city in fields['city']:
+                    if city['country_name'] is not None:
+                        if city['country_name'].lower() == "united states":
+                            dem_type="Ned1"
+                            print("Found city in US : %s. So dem type is ned" %fields['city'][0]['country_name'].lower())
+                            break
+                    else:
+                        print("fields['city'][0]['country_name'] is None")
         except:
             dem_type = "SRTM+v3"
+        if dem_type.upper().startswith("NED"):
+            break
 
-    if len(dems) != 1:
-        print("There are more than one type of dem, so selecting SRTM+v3")
-        dem_type = "SRTM+v3"
     return dem_type
 '''
 def get_overlapping_slaves_query(master):
@@ -1234,9 +1594,15 @@ def create_dataset_json(id, version, met_file, ds_file):
         else:
             coordinates = md['union_geojson']['coordinates']
         '''
-
+        geo_type = md['union_geojson']['type']
         coordinates = md['union_geojson']['coordinates']
+        print(md['union_geojson'])
+        if geo_type == "MultiPolygon":
+            print("create_dataset_json : geo_type is %s, selecting first coordinates." %geo_type)
+            coordinates = coordinates[0]  
+            print("create_dataset_json : coordinates : %s" %coordinates)      
         cord_area = get_area(coordinates[0])
+
         if not cord_area>0:
             print("creating dataset json. coordinates are not clockwise, reversing it")
             coordinates = [coordinates[0][::-1]]

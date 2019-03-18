@@ -7,12 +7,12 @@ import util
 import gtUtil
 from util import ACQ
 import datetime  
-import dateutil.parser
 from datetime import datetime, timedelta
 import groundTrack
 from osgeo import ogr
 import lightweight_water_mask
 import csv
+from dateutil import parser
 
 # set logger
 log_format = "[%(asctime)s: %(levelname)s/%(name)s/%(funcName)s] %(message)s"
@@ -410,8 +410,103 @@ def isTrackSelected(land, water, land_area, water_area):
         selected = True
 
     return selected
-         
 
+
+def update_dateformat(d):
+    logger.info("update_dateformat in: %s" %d)
+    try:
+        if isinstance(d, datetime):
+            d = d.strftime('%Y-%m-%dT%H:%M:%SZ')
+        elif isinstance(d, str):
+            d = parser.parse(d).strftime('%Y-%m-%dT%H:%M:%SZ')
+        else:
+            logger.info("unknown type : %s" %type(d))
+    except Exception as err:
+        logger.info(str(err))
+    logger.info("update_dateformat out: %s" %d)
+    return d
+def update_dateformat2(d):
+    logger.info("update_dateformat in: %s" %d)
+    try:
+        if isinstance(d, datetime):
+            d = d.strftime('%Y%m%dT%H%M%S')
+        elif isinstance(d, str):
+            d = parser.parse(d).strftime('%Y%m%dT%H%M%S')
+        else:
+            logger.info("unknown type : %s" %type(d))
+    except Exception as err:
+        logger.info(str(err))
+    logger.info("update_dateformat out: %s" %d)
+    return d
+
+def write_result_file(result_file, result):
+    try:
+
+        with open(result_file, 'a') as fo:
+            cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            cw.writerow(["Date", "Orbit", "Type", "Track","Track_Land","Total_Acquisition_Land", "area_delta_in_resolution", "area_threshold_passed", "Orbit_Quality_Test_Passed", "Reference_Unique_IPF_Count", "Secondary_Unique_IPF_Count",  "BlackList_Test_Passed", "Enumeration_Passed", "Candidate_Pairs", "Failure_Reason", "comment","Track_AOI_Intersection", "ACQ_POEORB_AOI_Intersection"])
+
+            cw.writerow([result.get('dt', ''), result.get('orbit_name', ''), "Primary", result.get('track', ''),result.get('Track_POEORB_Land', '') , result.get('ACQ_Union_POEORB_Land', ''), result.get('res', ''), result.get('area_threshold_passed', ''), result.get('WATER_MASK_PASSED', ''), result.get('primary_ipf_count', ''), result.get('secondary_ipf_count', ''), result.get('BL_PASSED', ''), result.get('matched', ''), result.get('candidate_pairs', ''), result.get('fail_reason', ''), result.get('comment', ''), result.get('Track_AOI_Intersection', ''), result.get('ACQ_POEORB_AOI_Intersection', '')])
+
+    except Exception as err:
+        logger.info("Error writing to csv file : %s : " %str(err))
+        traceback.print_exc()
+
+
+    
+def publish_result(reference_result, id_hash):
+  
+    version = "v2.0.0"
+    logger.info("\nPUBLISH RESULT")
+    #write_result_file(result_file, reference_result)
+
+
+    orbit_type = 'poeorb'
+    aoi_id = reference_result['aoi'].strip().replace(' ', '_')
+    logger.info("aoi_id : %s" %aoi_id)
+    reference_result['list_slave_dt']="00000000T000000"
+    
+    ACQ_RESULT_ID_TMPL = "S1-GUNW-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}-{}"
+    id = ACQ_RESULT_ID_TMPL.format('M', reference_result.get('master_count', 0), reference_result.get('slave_count', 0), reference_result.get('track', 0), update_dateformat2(reference_result.get('list_master_dt', '')), update_dateformat2(reference_result.get('list_slave_dt', '')), orbit_type, id_hash[0:4], reference_result['aoi'])
+
+
+
+    logger.info("publish_result : id : %s " %id)
+    #id = "acq-list-%s" %id_hash[0:4]
+    prod_dir =  id
+    os.makedirs(prod_dir, 0o755)
+
+    met_file = os.path.join(prod_dir, "{}.met.json".format(id))
+    ds_file = os.path.join(prod_dir, "{}.dataset.json".format(id))
+    
+
+
+    logger.info("\n\npublish_result: PUBLISHING %s : " %id)  
+    #with open(met_file) as f: md = json.load(f)
+    md = {}
+    md['id'] = id
+    md['aoi'] =  reference_result.get('aoi', '')
+    md['reference_orbit'] = reference_result.get('orbit_name', '')
+    md['reference_orbit_quality_passed'] = reference_result.get('orbit_quality_check_passed', '')
+    md['reference_tract_land'] = reference_result.get('Track_POEORB_Land', '')
+    md['reference_total_acqusition_land'] = reference_result.get('ACQ_Union_POEORB_Land', '')
+    md['pair_created'] = reference_result.get('result', '')
+    md['track_number'] = reference_result.get('track', '')
+    md['failure_reason'] = reference_result.get('fail_reason', '')
+    md['comment'] = reference_result.get('comment', '')
+    md['starttime'] = update_dateformat(reference_result.get('starttime', ''))
+    md['endtime'] = update_dateformat(reference_result.get('endtime', ''))
+    md['reference_area_threshold_passed'] = reference_result.get('area_threshold_passed', '')
+    md['reference_date'] = update_dateformat(reference_result.get('dt', ''))
+    md['reference_delta_area_sqkm'] = reference_result.get('delta_area', '')
+    md['reference_delta_area_pixel'] = reference_result.get('res', '')
+    md['union_geojson'] = reference_result.get('union_geojson', '')
+
+
+    with open(met_file, 'w') as f: json.dump(md, f, indent=2)
+
+    logger.info("publish_result : creating dataset file : %s" %ds_file)
+    util.create_dataset_json(id, version, met_file, ds_file)
 
         
 def print_groups(grouped_matched):
@@ -424,33 +519,46 @@ def print_groups(grouped_matched):
                 logger.info("\t\t %s" %acq[0])
 
 
+def group_acqs_by_track_date_from_metadata(frames):
+    logger.info("group_acqs_by_track_date_from_metadata")
+    return util.group_acqs_by_track_multi_date(create_acqs_from_metadata(frames))
+
+
+def create_acqs_from_metadata(frames):
+    acqs = []
+    logger.info("frame length : %s" %len(frames))
+    for acq in frames:
+        logger.info("create_acqs_from_metadata : %s" %acq['id'])
+        acq_obj = util.create_acq_obj_from_metadata(acq)
+        if acq_obj:
+            acqs.append(acq_obj)
+    return acqs
 
 def get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list):
     #util.print_acquisitions(aoi['id'], util.create_acqs_from_metadata(acqs))
 
 
     logger.info("\nget_covered_acquisitions_by_track_date")
-    
-    logger.info("PROCESSING AOI : %s : %s" %(aoi['id'], aoi['location']))
+    #logger.info(acqs) 
+    logger.info("PROCESSING AOI : %s : \nlocation  %s" %(aoi['id'], aoi['location']))
     grouped_matched = util.group_acqs_by_track_date_from_metadata(acqs) #group_acqs_by_track(acqs)
     logger.info("grouped_matched Done")
     print_groups(grouped_matched)
-
     matched_ids = grouped_matched["acq_info"].keys()
 
     #logger.info("grouped_matched : %s" %grouped_matched)
     logger.info("matched_ids : %s" %matched_ids)
     logger.info("PLATFORM : %s" %platform)
-
+    orbit_type = "P"
     orbit_file = os.path.basename(orbit_file)
     mission = "S1A"
     if platform == "Sentinel-1B":
         mission = "S1B"
 
-
+   
     selected_track_acqs = {}
-
-
+    result_track_acqs = {}
+  
     logger.info("Tracks to process : %s" %grouped_matched["grouped"])
     for track in grouped_matched["grouped"]:
         logger.info("get_covered_acquisitions_by_track_date : Processing track : %s" %track)
@@ -459,13 +567,27 @@ def get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_fil
                 logger.info("%s not in selected_track_list %s. So skipping this track" %(track, selected_track_list))
                 continue
         selected_track_dt_acqs = {}
+        result_track_dt_acqs = {}
+        
         for track_dt in grouped_matched["grouped"][track]:
             #water_mask_test1(track, orbit_or_track_dt, acq_info, grouped_matched_orbit_number,  aoi_location, aoi_id,  orbit_file = None)
-            selected, result = gtUtil.water_mask_check(track, track_dt, grouped_matched["acq_info"], grouped_matched["grouped"][track][track_dt],  aoi['location'], aoi['id'], threshold_pixel, mission, orbit_file, orbit_dir)
-            with open(result_file, 'a') as fo:
-                cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                cw.writerow([result['dt'], result['track'],result['Track_POEORB_Land'] , result['ACQ_Union_POEORB_Land'], result['acq_union_land_area'], result['res'], result['WATER_MASK_PASSED'], result['master_ipf_count'], result['slave_ipf_count'],result['matched'], result['BL_PASSED'], result['candidate_pairs'], result['Track_AOI_Intersection'], result['ACQ_POEORB_AOI_Intersection'], result['acq_union_aoi_intersection'] ])
+            selected, result = gtUtil.water_mask_check(track, track_dt, grouped_matched["acq_info"], grouped_matched["grouped"][track][track_dt],  aoi['location'], aoi['id'], threshold_pixel, mission, orbit_type, orbit_file, orbit_dir)
+            orbit_name = orbit_file.split('.EOF')[0].strip()
+            result['orbit_name']= orbit_name
+            result['track'] = track
+            result_track_dt_acqs[track_dt] = result
+            starttime, endtime = util.get_start_end_time2(grouped_matched["acq_info"], grouped_matched["grouped"][track][track_dt])
+            result['starttime'] = starttime
+            result['endtime'] = endtime
+            result['union_geojson']=aoi['location']
+            #master_dt_str = util.get_time_str_with_format(track_dt, "%Y%m%dT%H%M%S")
+            logger.info("master_dt_str : %s" %track_dt)
 
+            result['list_master_dt'] = track_dt
+            result['list_slave_dt'] = track_dt
+            result['master_count'] = 1
+            result['slave_count'] = 0
+ 
             if selected:
                 logger.info("SELECTED : aoi : %s track : %s  track_dt : %s" %(aoi['id'], track, track_dt))
                 selected_acqs = []
@@ -477,13 +599,29 @@ def get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_fil
                     logger.info("APPENDING : %s" %acq_id)
                     selected_acqs.append(acq)
                 selected_track_dt_acqs[track_dt] = selected_acqs
-        selected_track_acqs[track] = selected_track_dt_acqs
+                result['orbit_quality_check_passed']=True
+            else:
+                result['result'] = False
+                id_hash = util.get_ifg_hash([], [], track, aoi['id'])
+                result['orbit_quality_check_passed']=False
+                publish_result(result, id_hash)
+            try:
+                with open(result_file, 'a') as fo:
+                    cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    cw.writerow([result.get('dt', ''), result.get('orbit_name', ''), "Primary", result.get('track', ''),result.get('Track_POEORB_Land', '') , result.get('ACQ_Union_POEORB_Land', ''), result.get('delta_area', ''), result.get('res', ''), result.get('area_threshold_passed', ''), result.get('WATER_MASK_PASSED', ''), result.get('primary_ipf_count', ''), result.get('secondary_ipf_count', ''), result.get('BL_PASSED', ''), result.get('matched', ''), result.get('candidate_pairs', ''), result.get('fail_reason', ''), result.get('comment', ''), result.get('Track_AOI_Intersection', ''), result.get('ACQ_POEORB_AOI_Intersection', '')])
 
+            except Exception as err:
+                logger.info("\n\nERROR Writing to csv file : %s" %str(err))
+                traceback.print_exc()
+        selected_track_acqs[track] = selected_track_dt_acqs
+        logger.info("CHECK: selected_track_acqs[track] : %s" %selected_track_acqs[track])
+        
+        result_track_acqs[track] = result_track_dt_acqs
 
 
     #exit (0)
     logger.info("get_covered_acquisitions_by_track_date returns : %s" %selected_track_acqs)
-    return selected_track_acqs
+    return selected_track_acqs, result_track_acqs
  
 def get_covered_acquisitions(aoi, acqs, orbit_file):
     #util.print_acquisitions(aoi['id'], util.create_acqs_from_metadata(acqs))
@@ -612,9 +750,9 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
         result_file = "RESULT_SUMMARY_%s.csv" %aoi['id']
         with open(result_file, 'w') as fo:
             cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            cw.writerow(["Date","Track","Track_PEORB_Land","ACQ_Union_POEORB_Land", "ACQ_Union_Land", "RES", "WATER_MASK_PASSED", "Master_Ipf_Count", "Slave_Ipf_Count", "MATCHED", "BL_PASSED", "Candidate_Pairs", "Track_AOI_Intersection", "ACQ_POEORB_AOI_Intersection", "ACQ_AOI_Ingtersection"])
+            cw.writerow(["Date", "Orbit", "Type", "Track","Track_Land","Total_Acquisition_Land", "delta_area_sqkm", "delta_area_pixel", "area_threshold_passed", "Orbit_Quality_Test_Passed", "Reference_Unique_IPF_Count", "Secondary_Unique_IPF_Count",  "BlackList_Test_Passed", "Enumeration_Passed", "Candidate_Pairs", "Failure_Reason", "comment","Track_AOI_Intersection", "ACQ_POEORB_AOI_Intersection"])
 
-        selected_track_acqs = get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list)
+        selected_track_acqs, result_track_acqs = get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list)
 
         if len(selected_track_acqs.keys())==0:
             logger.info("Nothing selected from AOI %s " %aoi['id'])
@@ -630,6 +768,7 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
         aoi_data['aoi_location'] =  aoi['location']
         aoi_data['priority'] = aoi_priority
         aoi_data['selected_track_acqs'] = selected_track_acqs
+        aoi_data['result_track_acqs'] = result_track_acqs
         orbit_aoi_data[aoi['id']] = aoi_data
         #acq_info[aoi_data['id']] = acq
 	#aoi_acq[aoi] = acq_info 

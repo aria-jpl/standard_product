@@ -76,6 +76,7 @@ def resolve_acq(slc_id, version):
     result = query_es(query, es_index)
 
     if len(result) == 0:
+        logger.info("query : \n%s\n" %query)
         raise RuntimeError(
             "Failed to resolve acquisition ID for SLC ID: {}".format(slc_id))
 
@@ -104,6 +105,7 @@ def all_slcs_exist(acq_ids, acq_version, slc_version):
         for hit in result:
             slc_ids.append(hit['fields']['metadata.identifier'][0])
     if len(slc_ids) != len(acq_ids):
+        logger.info("acq_query : \n%s\n" %acq_query)
         raise RuntimeError(
             "Failed to resolve SLC IDs for all acquisition IDs: {} vs. {}".format(acq_ids, slc_ids))
 
@@ -166,7 +168,7 @@ def get_acqlists_by_acqid(acq_id, acqlist_version):
             }
         }
     }
-    es_index = "grq_{}_acq-list".format(acqlist_version)
+    es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
     result = query_es(query, es_index)
 
     if len(result) == 0:
@@ -186,7 +188,7 @@ def ifgcfg_exists(ifgcfg_id, version):
         },
         "fields": []
     }
-    index = "grq_{}_ifg-cfg".format(version)
+    index = "grq_{}_s1-gunw-ifg-cfg".format(version)
     result = query_es(query, index)
     return False if len(result) == 0 else True
 

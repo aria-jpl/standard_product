@@ -10,8 +10,7 @@ from hysds.celery import app
 
 server = 'https://qc.sentinel1.eo.esa.int/'
 
-orbitMap = [('precise','S1-AUX_POEORB'),
-            ('restituted','S1-AUX_RESORB')]
+orbitMap = [('precise','S1-AUX_POEORB')]
 
 misMap = { 'S1A': 'Sentinel-1A',
            'S1B': 'Sentinel-1B' }
@@ -71,7 +70,7 @@ def download_file(url, outdir='.', session=None):
 
 def get_orbits(es_url, otype, timebef, timeaft, mission):
     """Query for the orbits."""
-
+    print("get_orbits : es_url %s, otype %s, timebef %s, timeaft %s, mission %s" %(es_url, otype, timebef, timeaft, mission))
     query = {
         "query":{
             "bool":{
@@ -152,7 +151,7 @@ def fetch(starttime, endtime, mission='S1A', outdir='.', dry_run=False):
         timeaft = (timeStamp + delta).strftime(queryfmt)
 
         results = get_orbits(es_url, spec[1], timebef, timeaft, mission)
-        #print(results)
+        print("fetch results : %s" %results)
         
         # list all orbit files
         for res in results:
