@@ -60,8 +60,6 @@ def query_es(query, idx, url=app.conf['GRQ_ES_URL']):
 
 def resolve_acq(slc_id, version):
     """Resolve acquisition id."""
-    if "-pds" in slc_id:
-        slc_id = slc_id.split("-pds")[0]
 
     query = {
         "query": {

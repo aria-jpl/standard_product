@@ -124,17 +124,6 @@ def get_orbit_from_orbit_file(orbit_file):
     logger.info("get_orbit_from_orbit_file : orbit_url : {}".format(orbit_url))
     return orbit_url
 
-def query_es_slc_opds(slc_id):
-    try:
-        result = query_es(GRQ_ES_ENDPOINT, slc_id)
-    except ValueError as e:
-        slc_id_opds = slc_id + "pds"
-        print("Failed in finding SLC with slc_id: {}. Trying OPDS SLC: {}".format(slc_id, slc_id_opds))
-        result = query_es(GRQ_ES_ENDPOINT, slc_id_opds)
-
-    return result
-
-
 def query_es(endpoint, doc_id):
     """
     This function queries ES
@@ -646,9 +635,9 @@ def publish_data( acq_info, project, job_priority, dem_type, track, aoi_id, star
     #job_type = "job-standard-product-ifg:%s" %standard_product_ifg_version
        
     # get metadata
-    master_md = { i:query_es_slc_opds(i) for i in master_scene}
+    master_md = { i:query_es(GRQ_ES_ENDPOINT, i) for i in master_scene}
     #logger.info("master_md: {}".format(json.dumps(master_md, indent=2)))
-    slave_md = { i:query_es_slc_opds(i) for i in slave_scene }
+    slave_md = { i:query_es(GRQ_ES_ENDPOINT, i) for i in slave_scene }
     #logger.info("slave_md: {}".format(json.dumps(slave_md, indent=2)))
 
     # get urls (prefer s3)
