@@ -128,7 +128,7 @@ def query_es_slc_opds(slc_id):
     try:
         result = query_es(GRQ_ES_ENDPOINT, slc_id)
     except ValueError as e:
-        slc_id_opds = slc_id + "-pds"
+        slc_id_opds = slc_id + "pds"
         print("Failed in finding SLC with slc_id: {}. Trying OPDS SLC: {}".format(slc_id, slc_id_opds))
         result = query_es(GRQ_ES_ENDPOINT, slc_id_opds)
 
