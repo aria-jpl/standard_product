@@ -109,11 +109,6 @@ def all_slcs_exist(acq_ids, acq_version, slc_version):
     acq_slc_mapper = {row['_id']: row['fields']['metadata.identifier'][0] for row in result}
     slc_ids = [row['fields']['metadata.identifier'][0] for row in result]  # extract slc ids
 
-    # For opds: also find opds slcs
-    slc_ids_pds = [slc_id+"-pds" for slc_id in slc_ids];
-    slc_ids_all = slc_ids_pds + slc_ids;
-
-
     if len(acq_ids) != len(acq_slc_mapper):
         for acq_id in acq_ids:
             if not acq_slc_mapper.get(acq_id):
@@ -127,7 +122,7 @@ def all_slcs_exist(acq_ids, acq_version, slc_version):
     slc_query = {
         "query": {
             "ids": {
-                "values": slc_ids_all,
+                "values": slc_ids,
             }
         },
         "fields": []
@@ -139,11 +134,10 @@ def all_slcs_exist(acq_ids, acq_version, slc_version):
     existing_slc_ids = []
     if len(result) > 0:
         for hit in result:
-            slc_id = slc_id.split("-pds")[0] if "-pds" in slc_id else slc_id
             existing_slc_ids.append(hit['_id'])
     logger.info("slc_ids: {}".format(slc_ids))
-    logger.info("existing_slc_ids: {}".format(set(existing_slc_ids)))
-    if len(set(slc_ids)) != len(set(existing_slc_ids)):
+    logger.info("existing_slc_ids: {}".format(existing_slc_ids))
+    if len(slc_ids) != len(existing_slc_ids):
         logger.info("Missing SLC IDs: {}".format(list(set(slc_ids) - set(existing_slc_ids))))
         return False
     return True
