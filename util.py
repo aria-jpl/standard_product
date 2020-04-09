@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
 from xml.etree import ElementTree
@@ -86,7 +91,7 @@ MISSION = 'S1A'
 
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, download_url, tracknumber, location, starttime, endtime, direction, orbitnumber, identifier, pol_mode, pv, sensingStart, sensingStop, ingestiondate, platform = None  ):
         print("ACQ : %s %s %s" %(acq_id, starttime, endtime))
         if isinstance(acq_id, tuple) or isinstance(acq_id, list):
@@ -199,9 +204,9 @@ def group_acqs_by_track_multi_date(acqs):
         day_dt_tomorrow = day_dt + timedelta(days=1)
         print("day_dt_yesterday : %s " %day_dt_yesterday)
         print("day_dt_tomorrow : %s" %day_dt_tomorrow)
-        if acq.tracknumber in grouped.keys():
-            print("acq.tracknumber : %s grouped[acq.tracknumber].keys() : %s " %(acq.tracknumber, grouped[acq.tracknumber].keys()))
-            for d in  grouped[acq.tracknumber].keys():
+        if acq.tracknumber in list(grouped.keys()):
+            print("acq.tracknumber : %s grouped[acq.tracknumber].keys() : %s " %(acq.tracknumber, list(grouped[acq.tracknumber].keys())))
+            for d in  list(grouped[acq.tracknumber].keys()):
                 if d == day_dt_yesterday:
                     print("day_dt_yesterday exists. updating day_dt to day_dt_yesterday")
                     day_dt = day_dt_yesterday
@@ -364,7 +369,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 def get_env_box(env):
 
@@ -386,7 +391,7 @@ def isTrackSelected(acqs_land, total_land):
         sum_of_acq_land+= acq_land
 
     delta = abs(sum_of_acq_land - total_land)
-    if delta/total_land<.01:
+    if old_div(delta,total_land)<.01:
         selected = True
 
     return selected
@@ -748,6 +753,74 @@ def get_dataset(id, index_suffix):
     print(result['hits']['total'])
     return result
 
+def get_dataset_by_hash(ifg_hash, dataset_type, es_index="grq"):
+    """Query for existence of dataset by ID."""
+
+    uu = UrlUtils()
+    es_url = uu.rest_url
+    #es_index = "{}_{}_s1-ifg".format(uu.grq_index_prefix, version)
+
+    # query
+    query = {
+        "query":{
+            "bool":{
+                "must":[
+                    { "term":{"metadata.full_id_hash.raw": ifg_hash} },
+                    { "term":{"dataset.raw": dataset_type} }
+                ]
+            }
+        }
+        
+    }
+
+    logger.info(query)
+
+    if es_url.endswith('/'):
+        search_url = '%s%s/_search' % (es_url, es_index)
+    else:
+        search_url = '%s/%s/_search' % (es_url, es_index)
+    logger.info("search_url : %s" %search_url)
+
+    r = requests.post(search_url, data=json.dumps(query))
+    r.raise_for_status()
+
+    if r.status_code != 200:
+        logger.info("Failed to query %s:\n%s" % (es_url, r.text))
+        logger.info("query: %s" % json.dumps(query, indent=2))
+        logger.info("returned: %s" % r.text)
+        raise RuntimeError("Failed to query %s:\n%s" % (es_url, r.text))
+    result = r.json()
+    logger.info(result['hits']['total'])
+    return result
+
+
+
+def get_complete_track_aoi_by_hash(new_ifg_hash, track, aoi):
+    logger.info("get_complete_track_aoi_by_hash : new_ifg_hash {} track {} aoi {}".format(new_ifg_hash, track, aoi))
+    es_index="grq_*_s1-gunw-acqlist-audit_trail"
+    result = get_dataset_by_hash(new_ifg_hash, "S1-GUNW-acqlist-audit_trail", es_index)
+    total = result['hits']['total']
+    logger.info("check_slc_status_by_hash : total : %s" %total)
+    if total>0:
+        for i in range(total):
+            found_id  = result['hits']['hits'][i]["_id"]
+            logger.info("get_complete_track_aoi_by_hash: audit trail found: %s" %found_id)
+            metadata = result['hits']['hits'][i]["_source"]["metadata"]
+            this_track = metadata["track_number"]
+            this_aoi = metadata["aoi"]
+            logger.info("With Track and AOI : %s, %s" %(this_track, this_aoi))
+            if isinstance(this_track, list):
+                track.extend(this_track)
+            else:
+                track.append(this_track)
+            if isinstance(this_aoi, list):
+                aoi.extend(this_aoi)
+            else:
+                aoi.append(this_aoi)
+
+    return list(set(track)), list(set(aoi))
+
+
 def get_dataset(id):
     """Query for existence of dataset by ID."""
 
@@ -760,6 +833,7 @@ def get_dataset(id):
     # query
     query = {
         "query":{
+
             "bool":{
                 "must":[
                     { "term":{ "_id": id } }
@@ -1114,12 +1188,12 @@ def filter_acq_ids(acq_info, acq_ids, ssth=3):
         temp_dict[acq_id] = sensing_start
         
 
-    sorted_x = sorted(temp_dict.items(), key=operator.itemgetter(0))
+    sorted_x = sorted(list(temp_dict.items()), key=operator.itemgetter(0))
     sorted_temp_dict = OrderedDict(sorted_x)
     print ("sorted_temp_dict : %s " %sorted_temp_dict)
 
     ''' All the acquisition ids are sorted by sensing_start time in sorted_temp_dict now '''
-    for acq_id, sensing_start in sorted_temp_dict.items():
+    for acq_id, sensing_start in list(sorted_temp_dict.items()):
         print("acq_id: %s  sensing_start : %s" %(acq_id, sensing_start))
         if type(acq_id) == 'tuple' or type(acq_id)=='list':
             acq_id = acq_id[0]
@@ -1189,7 +1263,7 @@ def filter_acq_ids(acq_info, acq_ids, ssth=3):
             'sensingStop' : sensing_stop
                 }
     filtered_ids = []
-    for k in dedup_acqs.keys():
+    for k in list(dedup_acqs.keys()):
         filtered_ids.append(k)
     print("returning : filtered_ids : %s, dropped_ids : %s" %(filtered_ids, dropped_ids))   
     return filtered_ids, dropped_ids
@@ -1225,7 +1299,7 @@ def is_overlap(geojson1, geojson2):
     p1=Polygon(geojson1[0])
     p2=Polygon(geojson2[0])
     if p1.intersects(p2):
-        p3 = p1.intersection(p2).area/p1.area
+        p3 = old_div(p1.intersection(p2).area,p1.area)
     return p1.intersects(p2), p3
 
 def is_overlap_multi(geojson1, geojson2):
@@ -1318,9 +1392,9 @@ def get_intersection_area(cord1, cord2):
         intersection_land_area = lightweight_water_mask.get_land_area(intersection)
         p1_land_area = lightweight_water_mask.get_land_area(p1)
         print("intersection_land_area : %s p1_land_area : %s" %(intersection_land_area,p1_land_area))
-        p3 = p1.intersection(p2).area/p1.area
+        p3 = old_div(p1.intersection(p2).area,p1.area)
         print("\n%s intersects %s with area : %s\n" %(p1, p2, p3))
-        p3 = intersection_land_area/p1_land_area
+        p3 = old_div(intersection_land_area,p1_land_area)
         print("updated_land_area : %s" %p3)
     return p3
 
@@ -1414,7 +1488,7 @@ def ref_truncated(ref_scene, matched_footprints, covth=.99):
     ref_int_tr_area = ref_int_tr.GetArea() # in square meters
     print("Reference intersection GeoJSON: %s" % ref_int.ExportToJson())
     print("area (m^2) for intersection: %s" % ref_int_tr_area)
-    cov = ref_int_tr_area/ref_geom_tr_area
+    cov = old_div(ref_int_tr_area,ref_geom_tr_area)
     print("coverage: %s" % cov)
     if cov < covth:
         print("Matched union doesn't cover at least %s%% of the reference footprint." % (covth*100.))

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from builtins import str
 import os
 import sys
 import time
@@ -206,7 +207,7 @@ def main():
     # read in context
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     with open(context_file) as f:
         ctx = json.load(f)
 

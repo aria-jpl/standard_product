@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import os, sys, re, requests, json, logging, traceback, argparse, copy, bisect
 import util
 #from hysds.celery import app
@@ -232,7 +234,7 @@ def ref_truncated(ref_scene, matched_footprints, covth=.99):
     ref_int_tr_area = ref_int_tr.GetArea() # in square meters
     logger.info("Reference intersection GeoJSON: %s" % ref_int.ExportToJson())
     logger.info("area (m^2) for intersection: %s" % ref_int_tr_area)
-    cov = ref_int_tr_area/ref_geom_tr_area
+    cov = old_div(ref_int_tr_area,ref_geom_tr_area)
     logger.info("coverage: %s" % cov)
     if cov < covth:
         logger.info("Matched union doesn't cover at least %s%% of the reference footprint." % (covth*100.))
@@ -248,7 +250,7 @@ def is_overlap(geojson1, geojson2):
     p1=Polygon(geojson1[0])
     p2=Polygon(geojson2[0])
     if p1.intersects(p2):
-        p3 = p1.intersection(p2).area/p1.area
+        p3 = old_div(p1.intersection(p2).area,p1.area)
     return p1.intersects(p2), p3
 
 
@@ -394,7 +396,7 @@ def group_frames_by_track_date(frames):
         metadata[h['_id']] = fields['metadata']
 	#break
     #print("grouped : %s" %grouped)
-    logger.info("grouped keys : %s" %grouped.keys())
+    logger.info("grouped keys : %s" %list(grouped.keys()))
     return {
         "hits": hits,
         "grouped": grouped,
@@ -426,7 +428,7 @@ def find_candidate_pair(candidate_pair_list, ref_acq, query, switch, must_acq=No
     #exit(0)
 
     grouped_matched = group_acqs_by_orbitnumber(matched_acqs)
-    matched_ids = grouped_matched["acq_info"].keys()
+    matched_ids = list(grouped_matched["acq_info"].keys())
     
     if must_acq is not None:
         logger.info(grouped_matched["grouped"])
@@ -436,7 +438,7 @@ def find_candidate_pair(candidate_pair_list, ref_acq, query, switch, must_acq=No
             logger.info("ERROR : master acq : %s in matched acq list of the slave : "%must_acq.acq_id)
 	
     
-    logger.info(grouped_matched["acq_info"].keys())
+    logger.info(list(grouped_matched["acq_info"].keys()))
     #logger.info(type(grouped_matched["acq_info"]))
     #logger.info(grouped_matched["grouped"])
     slc_count = 0
@@ -457,7 +459,7 @@ def find_candidate_pair(candidate_pair_list, ref_acq, query, switch, must_acq=No
                 for acq in matched_acq_ids:
                     slc_count=slc_count+1
                     logger.info("]\t\tTypeCheck %s : %s" %(type(acq), type(acq[0])))
-                    if acq.strip() in grouped_matched["acq_info"].keys():
+                    if acq.strip() in list(grouped_matched["acq_info"].keys()):
                         acq_info =grouped_matched["acq_info"][acq.strip()]
                         matched_acqs.append(acq_info) 
                     else:
@@ -475,7 +477,7 @@ def find_candidate_pair(candidate_pair_list, ref_acq, query, switch, must_acq=No
                     logger.info("is_overlapped : %s, overlap : %s" %(is_overlapped, overlap))
                     matched_acqs=[]
                     matched_acqs2=[]
-                    for acq_id in overlapped_matches.keys():
+                    for acq_id in list(overlapped_matches.keys()):
                         matched_acqs2.append(acq_id[0])
                         matched_acqs.append(grouped_matched["acq_info"][acq_id[0]])
         	    #logger.info("overlap area : %s" %overlap)

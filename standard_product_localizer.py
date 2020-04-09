@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging, re
 import hashlib
 from datetime import datetime
@@ -46,7 +51,7 @@ slc_check_max_sec = 300
 sling_completion_max_sec = 11000
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, acq_type):
         self.acq_id=acq_id
         self.acq_type = acq_type
@@ -72,7 +77,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 def get_orbit_from_orbit_file(orbit_file):
     logger.info("get_orbit_from_orbit_file : {}".format(orbit_file))
@@ -462,7 +467,7 @@ def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_
     logger.info("%s : %s" %(type(spyddder_sling_extract_version), spyddder_sling_extract_version))
     job_info = {}
     
-    acq_list = acq_info.keys()
+    acq_list = list(acq_info.keys())
 
     logger.info("spyddder_sling_extract_version : %s" %spyddder_sling_extract_version)
     logger.info("multi_acquisition_localizer_version : %s" %multi_acquisition_localizer_version)
@@ -550,7 +555,7 @@ def get_urls(info):
 
 def check_all_job_completed(job_info):
     all_done = True
-    for job_id in job_info.keys():
+    for job_id in list(job_info.keys()):
         if not job_info[job_id]['completed']:  
             logger.info("\ncheck_all_job_completed : %s NOT completed!!" %job_id)
             all_done = False
@@ -851,7 +856,7 @@ def check_ES_status(doc_id):
 def main():
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     resolve_source(context_file)
 
 if __name__ == "__main__":

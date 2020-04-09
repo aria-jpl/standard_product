@@ -29,6 +29,7 @@ RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
 RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
+
 # create work directory
 RUN set -ex \
  && mkdir -p /data/work \

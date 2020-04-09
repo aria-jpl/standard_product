@@ -489,7 +489,7 @@ def get_covered_acquisitions(aoi, acqs):
     
     for acq in acqs:
         grouped_matched = group_acqs_by_track(acqs)
-        matched_ids = grouped_matched["acq_info"].keys()
+        matched_ids = list(grouped_matched["acq_info"].keys())
     
 
 
@@ -719,7 +719,7 @@ def main():
     # read in _context.json
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     
     resolve_aoi_acqs(context_file)
 

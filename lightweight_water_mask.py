@@ -5,6 +5,10 @@ Returns Land/Water percentages for input geojson polygons.
 '''
 
 from __future__ import print_function
+from __future__ import division
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import os
 import json
 import pyproj
@@ -74,12 +78,12 @@ def get_water_area(geojson):
 def get_land_percentage(geojson):
     '''Returns the percentage of area covered by land. 0.0 to 1.0'''
     geojson = validate_geojson(geojson)
-    return get_land_area(geojson) / get_area(geojson)
+    return old_div(get_land_area(geojson), get_area(geojson))
 
 def get_water_percentage(geojson):
     '''Returns the percentage of area covered by water. 0.0 to 1.0'''
     geojson = validate_geojson(geojson)
-    return get_water_area(geojson) / get_area(geojson)
+    return old_div(get_water_area(geojson), get_area(geojson))
 
 def get_polygons(geojson, oftype='land'):
     '''returns a list of land area polygons that intersect the input geojson, for either land or water, cropped to the input geojson extent'''
@@ -112,7 +116,7 @@ def get_area(geojson):
     geojson = validate_geojson(geojson)
     newshape = shapely.ops.transform(partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
                                      pyproj.Proj(proj='aea')), geojson)
-    return newshape.area / 10.0**6
+    return old_div(newshape.area, 10.0**6)
 
 def get_shapes(oftype='land'):
     '''loads all the shapes from the water shapefile'''
@@ -146,7 +150,7 @@ def validate_geojson(geojson):
             print(type(geojson))
             raise Exception('input geojson is not valid: {}'.format(explain_validity(shp)))
 
-class bcolors:
+class bcolors(object):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -168,7 +172,7 @@ def comparison(input_val, comparison_val):
         if comparison_val < 0.1:
             return passed
         return failed
-    if (input_val - comparison_val) / input_val > 0.1:
+    if old_div((input_val - comparison_val), input_val) > 0.1:
         print(input_val, comparison_val)
         return failed
     return passed
@@ -213,7 +217,7 @@ def test():
                   'Land coverage:     {:15,.2f}        {}',
                   'Water coverage:    {:15,.2f}        {}']
 
-    for name, coords in test_dict.iteritems():
+    for name, coords in test_dict.items():
         geojson = {"type":"Polygon", "coordinates": [coords]}
         print('------------------------------------------------------')
         print('Evaluating area:   {}'.format(name))
