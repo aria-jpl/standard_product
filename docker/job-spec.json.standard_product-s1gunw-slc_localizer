@@ -10,6 +10,7 @@
   "recommended-queues" : [
     "standard_product-s1gunw-slc_localizer"
   ],
+  "disk_usage":"100GB",
   "soft_time_limit": 86400,
   "time_limit": 87000,
   "disk_usage": "5GB",
