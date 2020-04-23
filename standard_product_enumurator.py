@@ -1,3 +1,4 @@
+from builtins import str
 import os, sys, re, requests, json, logging, traceback, argparse, copy, bisect
 import util
 #from hysds.celery import app
@@ -260,7 +261,7 @@ def get_aoi_blacklist(aoi):
     bl_array = []  
     bls = get_aoi_blacklist_data(aoi)
     for bl in bls:
-        logger.info(bl.keys())
+        logger.info(list(bl.keys()))
         if 'master_scenes' in bl['metadata']:
             master_scenes = bl['metadata']['master_scenes']
             slave_scenes = bl['metadata']['slave_scenes']
@@ -415,7 +416,7 @@ def enumerate_acquisations(orbit_acq_selections):
 
     #candidate_pair_list = []
 
-    for aoi_id in orbit_aoi_data.keys():
+    for aoi_id in list(orbit_aoi_data.keys()):
         candidate_pair_list = []
         logger.info("\nenumerate_acquisations : Processing AOI : %s " %aoi_id)
         aoi_data = orbit_aoi_data[aoi_id]
@@ -428,14 +429,14 @@ def enumerate_acquisations(orbit_acq_selections):
         logger.info("BlackList for AOI %s:\n\t%s" %(aoi_id, aoi_blacklist))
 
 
-        for track in selected_track_acqs.keys():
+        for track in list(selected_track_acqs.keys()):
             if len(selected_track_list)>0:
                 if int(track) not in selected_track_list:
                     logger.info("enumerate_acquisations : %s not in selected_track_list %s. So skipping this track" %(track, selected_track_list))
                     continue
 
             logger.info("\nenumerate_acquisations : Processing track : %s " %track)
-            if len(selected_track_acqs[track].keys()) <=0:
+            if len(list(selected_track_acqs[track].keys())) <=0:
                 logger.info("\nenumerate_acquisations : No selected data for track : %s " %track)
                 continue
             min_max_count, track_candidate_pair_list = get_candidate_pair_list(aoi_id, track, selected_track_acqs[track], aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs[track], orbit_file)
@@ -478,7 +479,7 @@ def get_acq_ids(acqs):
     return acq_ids
 
 def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs, master_orbit_file):
-    logger.info("get_candidate_pair_list : %s Orbits" %len(selected_track_acqs.keys()))
+    logger.info("get_candidate_pair_list : %s Orbits" %len(list(selected_track_acqs.keys())))
     candidate_pair_list = []
     orbit_ipf_dict = {}
     min_max_count = 0
@@ -490,7 +491,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
     orbitNumber = []
     logger.info("skip_days : %s" %skip_days)
 
-    for track_dt in sorted(selected_track_acqs.keys(), reverse=True):
+    for track_dt in sorted(list(selected_track_acqs.keys()), reverse=True):
         logger.info(track_dt)
   
         result = util.get_result_dict(aoi, track) 
@@ -793,14 +794,14 @@ def write_result_file(result_file, result):
 
 
 def get_candidate_pair_list_by_orbitnumber(track, selected_track_acqs, aoi_data, orbit_data, job_data, aoi_blacklist, threshold_pixel):
-    logger.info("get_candidate_pair_list : %s Orbits" %len(selected_track_acqs.keys()))
+    logger.info("get_candidate_pair_list : %s Orbits" %len(list(selected_track_acqs.keys())))
     candidate_pair_list = []
     orbit_ipf_dict = {}
     min_max_count = 0
     aoi_location = aoi_data['aoi_location']
     logger.info("aoi_location : %s " %aoi_location)
 
-    for orbitnumber in sorted(selected_track_acqs.keys(), reverse=True):
+    for orbitnumber in sorted(list(selected_track_acqs.keys()), reverse=True):
         logger.info(orbitnumber)
    
         slaves_track = {}
@@ -848,7 +849,7 @@ def get_candidate_pair_list_by_orbitnumber(track, selected_track_acqs, aoi_data,
             orbitnumber_pv[slave_orbitnumber] = len(list(set(pv_list)))
             selected_slave_acqs_by_orbitnumber[slave_orbitnumber] =  selected_slave_acqs
 
-        for slave_orbitnumber in sorted( selected_slave_acqs_by_orbitnumber.keys(), reverse=True):
+        for slave_orbitnumber in sorted( list(selected_slave_acqs_by_orbitnumber.keys()), reverse=True):
             slave_ipf_count = orbitnumber_pv[slave_orbitnumber]
             slave_acqs = selected_slave_acqs_by_orbitnumber[slave_orbitnumber]
             
@@ -979,7 +980,7 @@ def check_match(ref_acq, matched_acqs, aoi_location, direction, ref_type = "mast
         '''
         logger.info("MATCHED")
         matched = True
-        for acq_id in overlapped_matches.keys():
+        for acq_id in list(overlapped_matches.keys()):
             if isinstance(acq_id, tuple) or isinstance(acq_id, list):
                 acq_id = acq_id[0]
             overlapped_acqs.append(acq_id)

@@ -2,7 +2,11 @@
 """
 Determine all combinations of topsApp configurations"
 """
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import os, sys, re, requests, json, logging, traceback, argparse, copy, bisect
 import hashlib
 from itertools import product, chain
@@ -88,9 +92,9 @@ def get_overlap(loc1, loc2):
     intersection_area = intersection.GetArea() # in square meters
     logger.info("area (m^2) for intersection: %s" % intersection_area)
     if area1 > area2:
-        return intersection_area/area1
+        return old_div(intersection_area,area1)
     else:
-        return intersection_area/area2
+        return old_div(intersection_area,area2)
 
 def get_acquisition_data(id):
     es_url = app.conf.GRQ_ES_URL
@@ -249,7 +253,7 @@ def ref_truncated(ref_scene, ids, footprints, covth=.95):
     ref_int_tr_area = ref_int_tr.GetArea() # in square meters
     logger.info("Reference intersection GeoJSON: %s" % ref_int.ExportToJson())
     logger.info("area (m^2) for intersection: %s" % ref_int_tr_area)
-    cov = ref_int_tr_area/ref_geom_tr_area
+    cov = old_div(ref_int_tr_area,ref_geom_tr_area)
     logger.info("coverage: %s" % cov)
     if cov < covth:
         logger.info("Matched union doesn't cover at least %s%% of the reference footprint." % (covth*100.))
@@ -576,7 +580,7 @@ def group_frames_by_track_date(frames):
         metadata[h['_id']] = fields['metadata']
 	#break
     #print("grouped : %s" %grouped)
-    print("grouped keys : %s" %grouped.keys())
+    print("grouped keys : %s" %list(grouped.keys()))
     return {
         "hits": hits,
         "grouped": grouped,
@@ -824,7 +828,7 @@ def enumerate_acq(acq):
         if ref_scene['pre_matches'] is not None:
             if track in ref_scene['pre_matches']['grouped']:
                 matched_days = ref_scene['pre_matches']['grouped'][track]
-                for matched_day, matched_ids in matched_days.iteritems():
+                for matched_day, matched_ids in matched_days.items():
                     matched_dts = []
                     for i in matched_ids: matched_dts.extend(ref_scene['pre_matches']['dates'][i])
                     #logger.info("pre_matches matched_ids: %s" % matched_ids)
@@ -1178,7 +1182,7 @@ def get_topsapp_cfgs_standard_product(project, auto_bbox, bbox, dataset, identif
         if ref_scene['pre_matches'] is not None:
             if track in ref_scene['pre_matches']['grouped']:
                 matched_days = ref_scene['pre_matches']['grouped'][track]
-                for matched_day, matched_ids in matched_days.iteritems():
+                for matched_day, matched_ids in matched_days.items():
                     matched_dts = []
                     for i in matched_ids: matched_dts.extend(ref_scene['pre_matches']['dates'][i])
                     #logger.info("pre_matches matched_ids: %s" % matched_ids)
@@ -1287,7 +1291,7 @@ def get_topsapp_cfgs_standard_product(project, auto_bbox, bbox, dataset, identif
         if ref_scene['post_matches'] is not None:
             if track in ref_scene['post_matches']['grouped']:
                 matched_days = ref_scene['post_matches']['grouped'][track]
-                for matched_day, matched_ids in matched_days.iteritems():
+                for matched_day, matched_ids in matched_days.items():
                     matched_dts = []
                     for i in matched_ids: matched_dts.extend(ref_scene['post_matches']['dates'][i])
                     #logger.info("post_matches matched_ids: %s" % matched_ids)

@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
 from xml.etree import ElementTree
@@ -86,7 +91,7 @@ MISSION = 'S1A'
 
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, download_url, tracknumber, location, starttime, endtime, direction, orbitnumber, identifier, pol_mode, pv, sensingStart, sensingStop, ingestiondate, platform = None  ):
         print("ACQ : %s %s %s" %(acq_id, starttime, endtime))
         if isinstance(acq_id, tuple) or isinstance(acq_id, list):
@@ -199,9 +204,9 @@ def group_acqs_by_track_multi_date(acqs):
         day_dt_tomorrow = day_dt + timedelta(days=1)
         print("day_dt_yesterday : %s " %day_dt_yesterday)
         print("day_dt_tomorrow : %s" %day_dt_tomorrow)
-        if acq.tracknumber in grouped.keys():
-            print("acq.tracknumber : %s grouped[acq.tracknumber].keys() : %s " %(acq.tracknumber, grouped[acq.tracknumber].keys()))
-            for d in  grouped[acq.tracknumber].keys():
+        if acq.tracknumber in list(grouped.keys()):
+            print("acq.tracknumber : %s grouped[acq.tracknumber].keys() : %s " %(acq.tracknumber, list(grouped[acq.tracknumber].keys())))
+            for d in  list(grouped[acq.tracknumber].keys()):
                 if d == day_dt_yesterday:
                     print("day_dt_yesterday exists. updating day_dt to day_dt_yesterday")
                     day_dt = day_dt_yesterday
@@ -364,7 +369,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 def get_env_box(env):
 
@@ -386,7 +391,7 @@ def isTrackSelected(acqs_land, total_land):
         sum_of_acq_land+= acq_land
 
     delta = abs(sum_of_acq_land - total_land)
-    if delta/total_land<.01:
+    if old_div(delta,total_land)<.01:
         selected = True
 
     return selected
@@ -1183,12 +1188,12 @@ def filter_acq_ids(acq_info, acq_ids, ssth=3):
         temp_dict[acq_id] = sensing_start
         
 
-    sorted_x = sorted(temp_dict.items(), key=operator.itemgetter(0))
+    sorted_x = sorted(list(temp_dict.items()), key=operator.itemgetter(0))
     sorted_temp_dict = OrderedDict(sorted_x)
     print ("sorted_temp_dict : %s " %sorted_temp_dict)
 
     ''' All the acquisition ids are sorted by sensing_start time in sorted_temp_dict now '''
-    for acq_id, sensing_start in sorted_temp_dict.items():
+    for acq_id, sensing_start in list(sorted_temp_dict.items()):
         print("acq_id: %s  sensing_start : %s" %(acq_id, sensing_start))
         if type(acq_id) == 'tuple' or type(acq_id)=='list':
             acq_id = acq_id[0]
@@ -1258,7 +1263,7 @@ def filter_acq_ids(acq_info, acq_ids, ssth=3):
             'sensingStop' : sensing_stop
                 }
     filtered_ids = []
-    for k in dedup_acqs.keys():
+    for k in list(dedup_acqs.keys()):
         filtered_ids.append(k)
     print("returning : filtered_ids : %s, dropped_ids : %s" %(filtered_ids, dropped_ids))   
     return filtered_ids, dropped_ids
@@ -1294,7 +1299,7 @@ def is_overlap(geojson1, geojson2):
     p1=Polygon(geojson1[0])
     p2=Polygon(geojson2[0])
     if p1.intersects(p2):
-        p3 = p1.intersection(p2).area/p1.area
+        p3 = old_div(p1.intersection(p2).area,p1.area)
     return p1.intersects(p2), p3
 
 def is_overlap_multi(geojson1, geojson2):
@@ -1387,9 +1392,9 @@ def get_intersection_area(cord1, cord2):
         intersection_land_area = lightweight_water_mask.get_land_area(intersection)
         p1_land_area = lightweight_water_mask.get_land_area(p1)
         print("intersection_land_area : %s p1_land_area : %s" %(intersection_land_area,p1_land_area))
-        p3 = p1.intersection(p2).area/p1.area
+        p3 = old_div(p1.intersection(p2).area,p1.area)
         print("\n%s intersects %s with area : %s\n" %(p1, p2, p3))
-        p3 = intersection_land_area/p1_land_area
+        p3 = old_div(intersection_land_area,p1_land_area)
         print("updated_land_area : %s" %p3)
     return p3
 
@@ -1483,7 +1488,7 @@ def ref_truncated(ref_scene, matched_footprints, covth=.99):
     ref_int_tr_area = ref_int_tr.GetArea() # in square meters
     print("Reference intersection GeoJSON: %s" % ref_int.ExportToJson())
     print("area (m^2) for intersection: %s" % ref_int_tr_area)
-    cov = ref_int_tr_area/ref_geom_tr_area
+    cov = old_div(ref_int_tr_area,ref_geom_tr_area)
     print("coverage: %s" % cov)
     if cov < covth:
         print("Matched union doesn't cover at least %s%% of the reference footprint." % (covth*100.))

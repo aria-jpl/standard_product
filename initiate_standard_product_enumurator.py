@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from builtins import str
 import os, sys, time, json, requests, logging, traceback
 import orbit_acquisition_selector
 import standard_product_enumurator
@@ -18,7 +19,7 @@ def main():
 if __name__ == '__main__':
     
     try: status = main()
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         with open('_alt_error.txt', 'w') as f:
             f.write("%s\n" % str(e))
         with open('_alt_traceback.txt', 'w') as f:

@@ -1,17 +1,18 @@
 {
   "command": "/home/ops/verdi/ops/standard_product/initiate_standard_product_localizer.sh",
   "imported_worker_files": {
-    "/home/ops/.netrc": ["/home/ops/.netrc"],
-    "/home/ops/.aws": ["/home/ops/.aws", "ro"],
-    "/home/ops/verdi/etc/settings.json": "/home/ops/verdi/ops/standard_product/settings.json",
-    "/home/ops/verdi/etc/settings.conf": "/home/ops/ariamh/conf/settings.conf",
-    "/home/ops/verdi/etc/settings.conf": "/home/ops/verdi/ops/standard_product/settings.conf"
+    "$HOME/.netrc": ["/home/ops/.netrc"],
+    "$HOME/.aws": ["/home/ops/.aws", "ro"],
+    "$HOME/verdi/etc/settings.json": "/home/ops/verdi/ops/standard_product/settings.json",
+    "$HOME/verdi/etc/settings.conf": "/home/ops/ariamh/conf/settings.conf",
+    "$HOME/verdi/etc/settings.conf": "/home/ops/verdi/ops/standard_product/settings.conf"
   },
   "recommended-queues" : [
     "standard_product-s1gunw-slc_localizer"
   ],
   "soft_time_limit": 86400,
-  "time_limit": 87000, 
+  "time_limit": 87000,
+  "disk_usage": "5GB",
   "params" : [
     {
       "name": "spyddder_sling_extract_version",

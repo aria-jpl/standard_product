@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging, re
 import hashlib
 from datetime import datetime
@@ -46,10 +51,10 @@ slc_check_max_sec = 300
 sling_completion_max_sec = 11000
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, acq_type):
         self.acq_id=acq_id
-	self.acq_type = acq_type
+        self.acq_type = acq_type
 
 def get_acq_object(acq_id, acq_type):
     return {
@@ -72,7 +77,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 def get_orbit_from_orbit_file(orbit_file):
     logger.info("get_orbit_from_orbit_file : {}".format(orbit_file))
@@ -254,8 +259,8 @@ def get_job_status(job_id):
         #print ("Original JOB info: \n%s"%json.dumps(orig_job_info))
         orig_job_info = orig_job_info["hits"]["hits"][0]
         orig_job_status = str(orig_job_info["_source"]["status"])
-	logger.info("Check Job Status : Job %s was Deduped. The new/origianl job id is %s whose status is : %s" %(job_id, return_job_id, return_job_status)) 
-	return_job_status = orig_job_status
+        logger.info("Check Job Status : Job %s was Deduped. The new/origianl job id is %s whose status is : %s" %(job_id, return_job_id, return_job_status))
+        return_job_status = orig_job_status
 
         if  orig_job_status == "job-failed":
             message = "Job was deduped against a failed job with id: %s, please retry job."%orig_job_id
@@ -267,8 +272,8 @@ def get_job_status(job_id):
             # return products staged and context of original job
             message = "success"
     else:
-	return_job_id = job_id
-    	return_job_status = result["_source"]["status"]
+        return_job_id = job_id
+        return_job_status = result["_source"]["status"]
 
     return return_job_status, return_job_id
 
@@ -347,7 +352,7 @@ def check_slc_status(slc_id, index_suffix):
     total = result['hits']['total']
 
     if total > 0:
-	return True
+        return True
 
     return False
 
@@ -445,13 +450,13 @@ def resolve_source(ctx_file):
     acq_info = {}
    
     for acq in master_acqs:
- 	acq_type = "master"
+        acq_type = "master"
         acq_info[acq]=get_acq_object(acq, acq_type)
 
     # Find out status of all Slave ACQs, create a ACQ object with that and update acq_info dictionary
     for acq in slave_acqs:
-	acq_type = "slave"
-	acq_info[acq]=get_acq_object(acq, acq_type)
+        acq_type = "slave"
+        acq_info[acq]=get_acq_object(acq, acq_type)
 
     return sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox)
 
@@ -462,7 +467,7 @@ def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_
     logger.info("%s : %s" %(type(spyddder_sling_extract_version), spyddder_sling_extract_version))
     job_info = {}
     
-    acq_list = acq_info.keys()
+    acq_list = list(acq_info.keys())
 
     logger.info("spyddder_sling_extract_version : %s" %spyddder_sling_extract_version)
     logger.info("multi_acquisition_localizer_version : %s" %multi_acquisition_localizer_version)
@@ -505,17 +510,17 @@ def get_id_hash(acq_info, job_priority, dem_type):
     for acq in sorted(acq_info.keys()):
         acq_type = acq_info[acq]['acq_type']
         master_slcs.append(acq_info[acq]['acq_type'])
-	if acq_type == "master":
-	    if master_ids_str=="":
-		master_ids_str=acq
-	    else:
-		master_ids_str += " "+acq
-
-	elif acq_type == "slave":
-            if slave_ids_str=="":
-                slave_ids_str=acq
+        if acq_type == "master":
+            if master_ids_str=="":
+                master_ids_str=acq
             else:
-                slave_ids_str += " "+acq
+                master_ids_str += " "+acq
+
+        elif acq_type == "slave":
+                if slave_ids_str=="":
+                    slave_ids_str=acq
+                else:
+                    slave_ids_str += " "+acq
 
 
     logger.info("master_ids_str : %s" %master_ids_str)
@@ -550,11 +555,11 @@ def get_urls(info):
 
 def check_all_job_completed(job_info):
     all_done = True
-    for job_id in job_info.keys():
+    for job_id in list(job_info.keys()):
         if not job_info[job_id]['completed']:  
-	    logger.info("\ncheck_all_job_completed : %s NOT completed!!" %job_id)	
+            logger.info("\ncheck_all_job_completed : %s NOT completed!!" %job_id)
             all_done = False
-	    break
+            break
     return all_done
 
 
@@ -851,7 +856,7 @@ def check_ES_status(doc_id):
 def main():
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     resolve_source(context_file)
 
 if __name__ == "__main__":
