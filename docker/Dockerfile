@@ -28,6 +28,8 @@ RUN pip install --upgrade --ignore-installed 'geopandas'
 #RUN pip3 install --upgrade --ignore-installed 'geopandas'
 RUN pip install shapely
 RUN pip3 install shapely
+RUN pip install numpy
+RUN pip3 install numpy
 
 RUN pip install 'fiona==1.7.13'
 RUN pip3 install 'fiona==1.7.13'
