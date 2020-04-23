@@ -39,8 +39,6 @@ RUN pip3 install 'fiona==1.7.13'
 #RUN pip3 install 'geopandas'
 RUN pip3 install elasticsearch
 RUN pip install elasticsearch
-=======
->>>>>>> develop
 
 RUN $HOME/verdi/bin/pip install shapely
 RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
