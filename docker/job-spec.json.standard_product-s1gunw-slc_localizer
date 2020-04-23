@@ -12,7 +12,8 @@
   ],
   "disk_usage":"100GB",
   "soft_time_limit": 86400,
-  "time_limit": 87000, 
+  "time_limit": 87000,
+  "disk_usage": "5GB",
   "params" : [
     {
       "name": "spyddder_sling_extract_version",

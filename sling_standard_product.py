@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging
 import hashlib
 from datetime import datetime
@@ -37,7 +42,7 @@ slc_check_max_sec = 300
 sling_completion_max_sec = 11000
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, acq_type):
 	self.acq_id=acq_id
 	self.acq_type = acq_type
@@ -63,7 +68,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 
 def query_es(endpoint, doc_id):
@@ -403,7 +408,7 @@ def sling(acq_info, spyddder_extract_version, multi_acquisition_localizer_versio
     job_info = {}
     
     id_hash = get_id_hash(acq_info, job_priority, dem_type)
-    acq_list = acq_info.keys()
+    acq_list = list(acq_info.keys())
 
     logger.info("\nSubmitting acquisition localizer job for Masters : %s" %master_scene)
     all_done, data  = submit_sling_job(id_hash, project, spyddder_extract_version, multi_acquisition_localizer_version, master_scene, job_priority)
@@ -474,7 +479,7 @@ def sling2(acq_info, spyddder_extract_version, multi_acquisition_localizer_versi
     job_info = {}
     
     id_hash = get_id_hash(acq_info, job_priority, dem_type)
-    acq_list = acq_info.keys()
+    acq_list = list(acq_info.keys())
 
     logger.info("\nSubmitting acquisition localizer job for Masters : %s" %master_scene)
     master_job_id = submit_sling_job(id_hash, project, spyddder_extract_version, multi_acquisition_localizer_version, master_scene, job_priority)
@@ -505,7 +510,7 @@ def sling2(acq_info, spyddder_extract_version, multi_acquisition_localizer_versi
     all_done = False
     while not all_done:
 
-        for job_id in job_info.keys():
+        for job_id in list(job_info.keys()):
 	   
             if not job_info[job_id]["completed"]: 
 		job_status, new_job_id  = get_job_status(job_id)  
@@ -529,7 +534,7 @@ def sling2(acq_info, spyddder_extract_version, multi_acquisition_localizer_versi
 	    now = datetime.utcnow()
 	    delta = (now - job_check_start_time).total_seconds()
             if delta >= sling_completion_max_sec:
-            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(delta/3600))
+            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(old_div(delta,3600)))
 	    logger.info("All job not completed. So sleeping for %s seconds" %sleep_seconds)
 	    time.sleep(sleep_seconds)
 
@@ -614,7 +619,7 @@ def get_id_hash(acq_info, job_priority, dem_type):
 
 def check_all_job_completed(job_info):
     all_done = True
-    for job_id in job_info.keys():
+    for job_id in list(job_info.keys()):
         if not job_info[job_id]['completed']:  
 	    logger.info("\ncheck_all_job_completed : %s NOT completed!!" %job_id)	
             all_done = False
@@ -732,7 +737,7 @@ def submit_ifg_job( acq_info, project, standard_product_ifg_version, job_priorit
 
     logger.info("project : %s" %project)
 
-    for acq in acq_info.keys():
+    for acq in list(acq_info.keys()):
 	acq_data = acq_info[acq]['acq_data']
 	acq_type = acq_info[acq]['acq_type']
 	identifier =  acq_data["metadata"]["identifier"]
@@ -947,7 +952,7 @@ def check_ES_status(doc_id):
 def main():
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     resolve_source(context_file)
 
 if __name__ == "__main__":

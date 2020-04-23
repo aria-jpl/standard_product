@@ -1,4 +1,7 @@
 #!/usr/bin/env python3 
+from __future__ import division
+from builtins import str
+from past.utils import old_div
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
 from xml.etree import ElementTree
@@ -411,7 +414,7 @@ def isTrackSelected(land, water, land_area, water_area):
     for acq_land in land:
         total_acq_land+= acq_land
 
-    if ((total_acq_land*100)/land)> 98:
+    if (old_div((total_acq_land*100),land))> 98:
         selected = True
 
     return selected
@@ -571,7 +574,7 @@ def get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_fil
     grouped_matched = util.group_acqs_by_track_date_from_metadata(acqs) #group_acqs_by_track(acqs)
     logger.info("grouped_matched Done")
     print_groups(grouped_matched)
-    matched_ids = grouped_matched["acq_info"].keys()
+    matched_ids = list(grouped_matched["acq_info"].keys())
 
     #logger.info("grouped_matched : %s" %grouped_matched)
     logger.info("matched_ids : %s" %matched_ids)
@@ -677,7 +680,7 @@ def get_covered_acquisitions(aoi, acqs, orbit_file):
 
     logger.info("AOI : %s" %aoi['location'])
     grouped_matched = util.group_acqs_by_orbit_number_from_metadata(acqs) #group_acqs_by_track(acqs)
-    matched_ids = grouped_matched["acq_info"].keys()
+    matched_ids = list(grouped_matched["acq_info"].keys())
            
     #logger.info("grouped_matched : %s" %grouped_matched)
     logger.info("matched_ids : %s" %matched_ids)
@@ -808,7 +811,7 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
 
         selected_track_acqs, result_track_acqs = get_covered_acquisitions_by_track_date(aoi, acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list)
 
-        if len(selected_track_acqs.keys())==0:
+        if len(list(selected_track_acqs.keys()))==0:
             logger.info("Nothing selected from AOI %s " %aoi['id'])
             continue
 
@@ -827,7 +830,7 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
         #acq_info[aoi_data['id']] = acq
 	#aoi_acq[aoi] = acq_info 
         #logger.info("Acquistions to localize: {}".format(json.dumps(acq_info, indent=2)))
-    if len(orbit_aoi_data.keys())<=0:
+    if len(list(orbit_aoi_data.keys()))<=0:
         logger.info("Existing as NOTHING selected for any aois")
         sys.exit(0)
     return orbit_aoi_data

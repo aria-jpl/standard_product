@@ -10,6 +10,7 @@
   "disk_usage":"100GB",
   "soft_time_limit": 14400,
   "time_limit": 15000,
+  "disk_usage": "2GB",
   "recommended-queues": [ "standard_product-s1gunw-acq_enumerator" ],
   "params" : [
     {

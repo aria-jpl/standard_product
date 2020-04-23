@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging
 import hashlib
 from datetime import datetime
@@ -36,7 +41,7 @@ slc_check_max_sec = 300
 sling_completion_max_sec = 10800
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, acq_type, acq_data, localized=False, job_id=None, job_status = None):
 	self.acq_id=acq_id
 	self.acq_type = acq_type
@@ -66,7 +71,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return area / 2
+    return old_div(area, 2)
 
 
 def query_es(endpoint, doc_id):
@@ -424,7 +429,7 @@ def resolve_source(ctx_file):
     return acq_info, spyddder_extract_version, acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_scenes, slave_scenes, union_geojson, bbox
 
 
-def process_sling_job(acq_list, 
+#def process_sling_job(acq_list, 
 
 
 def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_scene, slave_scene, union_geojson, bbox):
@@ -435,7 +440,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
     #logger.info(acq_info)
     logger.info("%s : %s" %(type(spyddder_extract_version), spyddder_extract_version))
     # acq_info has now all the ACQ's status. Now submit the Sling job for the one's whose status = 0 and update the slc_info with job id
-    for acq_id in acq_info.keys():
+    for acq_id in list(acq_info.keys()):
 
 	if not acq_info[acq_id]['localized']:
 	    acq_data = acq_info[acq_id]['acq_data']
@@ -452,7 +457,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
     sling_check_start_time = datetime.utcnow()
     while not all_done:
 
-        for acq_id in acq_info.keys():
+        for acq_id in list(acq_info.keys()):
 	    acq_data = acq_info[acq_id]['acq_data']
             if not acq_info[acq_id]['localized']: 
 		job_status, job_id  = get_job_status(acq_info[acq_id]['job_id'])  
@@ -489,7 +494,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
 	    now = datetime.utcnow()
 	    delta = (now - sling_check_start_time).total_seconds()
             if delta >= sling_completion_max_sec:
-            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(delta/3600))
+            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(old_div(delta,3600)))
 	    logger.info("All job not completed. So sleeping for %s seconds" %sleep_seconds)
 	    time.sleep(sleep_seconds)
 
@@ -504,7 +509,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
     slc_check_start_time = datetime.utcnow()
     while not all_exists:
         all_exists = True
-	for acq_id in acq_info.keys():
+	for acq_id in list(acq_info.keys()):
             if not acq_info[acq_id]['localized']:
 		acq_data = acq_info[acq_id]['acq_data']
  		acq_info[acq_id]['localized'] = check_slc_status(acq_data['metadata']['identifier'])
@@ -517,7 +522,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
 	    now = datetime.utcnow()
             delta = (now-slc_check_start_time).total_seconds()
 	    if delta >= slc_check_max_sec:
-                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(delta/60))
+                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(old_div(delta,60)))
             time.sleep(60)
 
 
@@ -559,7 +564,7 @@ def sling(acq_info, spyddder_extract_version, acquisition_localizer_version, pro
 
 def check_all_job_completed(acq_info):
     all_done = True
-    for acq_id in acq_info.keys():
+    for acq_id in list(acq_info.keys()):
         if not acq_info[acq_id]['localized']:  
 	    job_status = acq_info[acq_id]['job_status']
 	    if not job_status == "job-completed":
@@ -601,7 +606,7 @@ def publish_data( acq_info, project, job_priority, dem_type, track,starttime, en
     master_acq_list = []
     slave_acq_list = []
 
-    for acq in acq_info.keys():
+    for acq in list(acq_info.keys()):
 	acq_data = acq_info[acq]['acq_data']
 	acq_type = acq_info[acq]['acq_type']
 	identifier =  acq_data["metadata"]["identifier"]
@@ -706,7 +711,7 @@ def submit_ifg_job( acq_info, project, standard_product_ifg_version, job_priorit
 
     logger.info("project : %s" %project)
 
-    for acq in acq_info.keys():
+    for acq in list(acq_info.keys()):
 	acq_data = acq_info[acq]['acq_data']
 	acq_type = acq_info[acq]['acq_type']
 	identifier =  acq_data["metadata"]["identifier"]

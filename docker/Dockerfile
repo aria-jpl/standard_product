@@ -1,4 +1,4 @@
-FROM hysds/pge-isce_giant
+FROM hysds/isce2
 
 MAINTAINER mkarim "Mohammed.R.Karim@jpl.nasa.gov"
 LABEL description="standard_product"
@@ -7,8 +7,8 @@ ARG git_oauth_token
 ARG id
 ARG gid
 
-# provision
-USER root
+# as ops user
+USER ops
 #RUN set -ex && \
  # usermod -u ${id} ops && \
   #groupmod -g ${gid} ops && \
@@ -39,9 +39,16 @@ RUN pip3 install 'fiona==1.7.13'
 #RUN pip3 install 'geopandas'
 RUN pip3 install elasticsearch
 RUN pip install elasticsearch
+=======
+>>>>>>> develop
 
-# as ops user
-USER ops
+RUN $HOME/verdi/bin/pip install shapely
+RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
+RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
+RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
+RUN $HOME/verdi/bin/pip install elasticsearch
+RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
+
 
 # create work directory
 RUN set -ex \

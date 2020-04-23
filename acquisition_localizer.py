@@ -1,4 +1,9 @@
 #!/usr/bin/env python 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import os, sys, time, json, requests, logging
 import hashlib
 from datetime import datetime
@@ -37,7 +42,7 @@ slc_check_max_sec = 300
 sling_completion_max_sec = 10800
 
 
-class ACQ:
+class ACQ(object):
     def __init__(self, acq_id, acq_data, localized=False, job_id=None, job_status = None):
         self.acq_id=acq_id
         self.acq_data = acq_data
@@ -341,7 +346,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
     #logger.info(acq_info)
     logger.info("%s : %s" %(type(spyddder_extract_version), spyddder_extract_version))
     # acq_info has now all the ACQ's status. Now submit the Sling job for the one's whose status = 0 and update the slc_info with job id
-    for acq_id in acq_info.keys():
+    for acq_id in list(acq_info.keys()):
 
         if not acq_info[acq_id]['localized']:
             acq_data = acq_info[acq_id]['acq_data']
@@ -358,7 +363,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
     sling_check_start_time = datetime.utcnow()
     while not all_done:
 
-        for acq_id in acq_info.keys():
+        for acq_id in list(acq_info.keys()):
             acq_data = acq_info[acq_id]['acq_data']
             if not acq_info[acq_id]['localized']: 
                 job_status, job_id  = get_job_status(acq_info[acq_id]['job_id'])  
@@ -384,7 +389,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
             now = datetime.utcnow()
             delta = (now - sling_check_start_time).total_seconds()
             if delta >= sling_completion_max_sec:
-                raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(delta/3600))
+                raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(old_div(delta,3600)))
             logger.info("All job not completed. So sleeping for %s seconds" %sleep_seconds)
             time.sleep(sleep_seconds)
 
@@ -399,7 +404,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
     slc_check_start_time = datetime.utcnow()
     while not all_exists:
         all_exists = True
-        for acq_id in acq_info.keys():
+        for acq_id in list(acq_info.keys()):
             if not acq_info[acq_id]['localized']:
                 acq_data = acq_info[acq_id]['acq_data']
                 acq_info[acq_id]['localized'] = check_slc_status(acq_data['metadata']['identifier'])
@@ -412,7 +417,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
             now = datetime.utcnow()
             delta = (now-slc_check_start_time).total_seconds()
             if delta >= slc_check_max_sec:
-                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(delta/60))
+                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(old_div(delta,60)))
             time.sleep(60)
     
     #At this point we have all the slcs localized
@@ -430,7 +435,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
 
 def get_output_data(acq_info):
     localized_data = {}
-    for acq_id in acq_info.keys():
+    for acq_id in list(acq_info.keys()):
         if not acq_info[acq_id]['localized']:
             return None
         acq_data = acq_info[acq_id]['acq_data']
@@ -456,7 +461,7 @@ def get_output_data(acq_info):
 
 def check_all_job_completed(acq_info):
     all_done = True
-    for acq_id in acq_info.keys():
+    for acq_id in list(acq_info.keys()):
         if not acq_info[acq_id]['localized']:  
             job_status = acq_info[acq_id]['job_status']
             if not job_status == "job-completed":
@@ -472,7 +477,7 @@ def submit_sling_job(spyddder_extract_version, acquisition_localizer_version, es
     identifier = acq_data["metadata"]["identifier"]
     dataset_type = acq_data["dataset_type"]
     dataset = acq_data["dataset"]
-    download_url = acq_data["metadata"]["download_url"
+    download_url = acq_data["metadata"]["download_url"]
     archive_filename = acq_data["metadata"]["archive_filename"]
     aoi = "no_aoi"
 
@@ -645,12 +650,8 @@ def main():
 
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     resolve_source(context_file)
 
 if __name__ == "__main__":
     main()
-
-
-
-

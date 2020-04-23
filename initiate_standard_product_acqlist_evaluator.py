@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from builtins import str
 import os
 import sys
 import time
@@ -206,7 +207,7 @@ def main():
     # read in context
     context_file = os.path.abspath("_context.json")
     if not os.path.exists(context_file):
-        raise(RuntimeError("Context file doesn't exist."))
+        raise RuntimeError
     with open(context_file) as f:
         ctx = json.load(f)
 
@@ -229,7 +230,7 @@ def main():
             acq_info[acq] = get_acq_object(acq, "master")
         for acq in acqlist['metadata']['slave_acquisitions']:
             acq_info[acq] = get_acq_object(acq, "slave")
-        if all_slcs_exist(acq_info.keys(), acq_version, slc_version):
+        if all_slcs_exist(list(acq_info.keys()), acq_version, slc_version):
             prod_dir = publish_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
                                     acqlist['metadata']['dem_type'], acqlist['metadata']['track_number'], acqlist['metadata']['tags'],
                                     acqlist['metadata']['starttime'], acqlist['metadata']['endtime'],
@@ -257,7 +258,7 @@ def main():
 if __name__ == "__main__":
     try:
         status = main()
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         with open('_alt_error.txt', 'w') as f:
             f.write("%s\n" % str(e))
         with open('_alt_traceback.txt', 'w') as f:
