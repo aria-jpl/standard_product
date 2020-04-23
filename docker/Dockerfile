@@ -22,11 +22,11 @@ USER ops
 # copy packages
 COPY . /home/ops/verdi/ops/standard_product
 
-RUN $HOME/verdi/bin/pip install shapely
-RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
-RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
-RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
-RUN $HOME/verdi/bin/pip install elasticsearch
+RUN pip install shapely
+RUN pip install 'fiona==1.7.13'
+RUN pip install 'pyproj==1.9.6'
+RUN pip install 'geopandas==0.6.3'
+RUN pip install elasticsearch
 RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 
