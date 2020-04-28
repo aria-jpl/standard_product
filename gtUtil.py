@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
 from xml.etree import ElementTree
@@ -476,14 +475,13 @@ def isTrackSelected(track, orbit_or_track_dt, union_land, union_water, track_lan
         logger.info("\nERROR : isTrackSelected : Returning as lands are Not correct")
         return False, result
     delta_A = abs(float(union_land - track_land))
-    pctDelta = float(old_div(delta_A,track_land))
-    delta_x = float(old_div(delta_A,250))
+    pctDelta = float(delta_A/track_land)
+    delta_x = float(delta_A/250)
     logger.info("delta_A : %s, delta_x : %s and pctDelta : %s" %(delta_A, delta_x, pctDelta))
     result['delta_area'] = delta_A 
     # Assiuming 90 m resolution, lets change it to km
-    res_km = float(old_div(90,1000))
-
-    res = old_div(delta_x,res_km)
+    res_km = float(90/1000)
+    res = delta_x/res_km
 
     logger.info("res : %s, threshold_pixel : %s" %(res, threshold_pixel))    
 

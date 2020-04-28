@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import os, sys, time, json, requests, logging
 import hashlib
@@ -389,7 +388,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
             now = datetime.utcnow()
             delta = (now - sling_check_start_time).total_seconds()
             if delta >= sling_completion_max_sec:
-                raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(old_div(delta,3600)))
+                raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(delta/3600))
             logger.info("All job not completed. So sleeping for %s seconds" %sleep_seconds)
             time.sleep(sleep_seconds)
 
@@ -417,7 +416,7 @@ def sling(acq_list, spyddder_extract_version, acquisition_localizer_version, esa
             now = datetime.utcnow()
             delta = (now-slc_check_start_time).total_seconds()
             if delta >= slc_check_max_sec:
-                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(old_div(delta,60)))
+                raise RuntimeError("Error : SLC not available %.2f min after sling jobs completed!!" %(delta/60))
             time.sleep(60)
     
     #At this point we have all the slcs localized

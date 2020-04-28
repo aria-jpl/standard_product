@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import os, sys, time, json, requests, logging
 import hashlib
@@ -68,8 +67,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return old_div(area, 2)
-
+    return area / 2
 
 def query_es(endpoint, doc_id):
     """
@@ -534,7 +532,7 @@ def sling2(acq_info, spyddder_extract_version, multi_acquisition_localizer_versi
 	    now = datetime.utcnow()
 	    delta = (now - job_check_start_time).total_seconds()
             if delta >= sling_completion_max_sec:
-            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(old_div(delta,3600)))
+            	raise RuntimeError("Error : Sling jobs NOT completed after %.2f hours!!" %(delta/3600))
 	    logger.info("All job not completed. So sleeping for %s seconds" %sleep_seconds)
 	    time.sleep(sleep_seconds)
 

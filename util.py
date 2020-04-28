@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
@@ -369,7 +368,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return old_div(area, 2)
+    return area / 2
 
 def get_env_box(env):
 
@@ -391,7 +390,7 @@ def isTrackSelected(acqs_land, total_land):
         sum_of_acq_land+= acq_land
 
     delta = abs(sum_of_acq_land - total_land)
-    if old_div(delta,total_land)<.01:
+    if delta/total_land<.01:
         selected = True
 
     return selected
@@ -1299,7 +1298,7 @@ def is_overlap(geojson1, geojson2):
     p1=Polygon(geojson1[0])
     p2=Polygon(geojson2[0])
     if p1.intersects(p2):
-        p3 = old_div(p1.intersection(p2).area,p1.area)
+        p3 = p1.intersection(p2).area/p1.area
     return p1.intersects(p2), p3
 
 def is_overlap_multi(geojson1, geojson2):
@@ -1392,9 +1391,9 @@ def get_intersection_area(cord1, cord2):
         intersection_land_area = lightweight_water_mask.get_land_area(intersection)
         p1_land_area = lightweight_water_mask.get_land_area(p1)
         print("intersection_land_area : %s p1_land_area : %s" %(intersection_land_area,p1_land_area))
-        p3 = old_div(p1.intersection(p2).area,p1.area)
+        p3 = p1.intersection(p2).area/p1.area
         print("\n%s intersects %s with area : %s\n" %(p1, p2, p3))
-        p3 = old_div(intersection_land_area,p1_land_area)
+        p3 = intersection_land_area/p1_land_area
         print("updated_land_area : %s" %p3)
     return p3
 
@@ -1488,7 +1487,7 @@ def ref_truncated(ref_scene, matched_footprints, covth=.99):
     ref_int_tr_area = ref_int_tr.GetArea() # in square meters
     print("Reference intersection GeoJSON: %s" % ref_int.ExportToJson())
     print("area (m^2) for intersection: %s" % ref_int_tr_area)
-    cov = old_div(ref_int_tr_area,ref_geom_tr_area)
+    cov = ref_int_tr_area/ref_geom_tr_area
     print("coverage: %s" % cov)
     if cov < covth:
         print("Matched union doesn't cover at least %s%% of the reference footprint." % (covth*100.))

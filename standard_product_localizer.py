@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import os, sys, time, json, requests, logging, re
 import hashlib
@@ -77,7 +76,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return old_div(area, 2)
+    return area / 2
 
 def get_orbit_from_orbit_file(orbit_file):
     logger.info("get_orbit_from_orbit_file : {}".format(orbit_file))
