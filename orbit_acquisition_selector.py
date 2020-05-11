@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 
 from __future__ import division
 from builtins import str
-from past.utils import old_div
 import os, sys, time, json, requests, logging
 import re, traceback, argparse, copy, bisect
 from xml.etree import ElementTree
@@ -414,7 +413,7 @@ def isTrackSelected(land, water, land_area, water_area):
     for acq_land in land:
         total_acq_land+= acq_land
 
-    if (old_div((total_acq_land*100),land))> 98:
+    if ((total_acq_land*100)/land)> 98:
         selected = True
 
     return selected

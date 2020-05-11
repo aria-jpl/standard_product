@@ -2,7 +2,6 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import os, sys, time, json, requests, logging, re
 import hashlib
@@ -77,7 +76,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return old_div(area, 2)
+    return area / 2
 
 def get_orbit_from_orbit_file(orbit_file):
     logger.info("get_orbit_from_orbit_file : {}".format(orbit_file))
@@ -437,7 +436,7 @@ def resolve_source(ctx_file):
     direction = ctx["input_metadata"]["direction"] 
     platform = ctx["input_metadata"]["platform"]
     spyddder_sling_extract_version = get_value(ctx, "spyddder_sling_extract_version", "develop")
-    multi_acquisition_localizer_version = get_value(ctx, "multi_acquisition_localizer_version", "master")
+    multi_acquisition_localizer_version = get_value(ctx, "multi_acquisition_localizer_version", "develop")
 
     job_priority = ctx["input_metadata"]["job_priority"]
     job_type, job_version = ctx['job_specification']['id'].split(':') 
