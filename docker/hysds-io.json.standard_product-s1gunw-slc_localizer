@@ -8,7 +8,7 @@
       "from": "submitter",
       "default": "develop",
       "type": "jobspec_version",
-      "version_regex": "job-multi_acquisition_localizer",
+      "version_regex": "job-acquisition_localizer_multi",
       "placeholder": "multi acquisition localizer version"
     },
     {
