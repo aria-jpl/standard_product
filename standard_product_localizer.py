@@ -436,7 +436,7 @@ def resolve_source(ctx_file):
     direction = ctx["input_metadata"]["direction"] 
     platform = ctx["input_metadata"]["platform"]
     spyddder_sling_extract_version = get_value(ctx, "spyddder_sling_extract_version", "develop")
-    multi_acquisition_localizer_version = get_value(ctx, "multi_acquisition_localizer_version", "master")
+    multi_acquisition_localizer_version = get_value(ctx, "multi_acquisition_localizer_version", "develop")
 
     job_priority = ctx["input_metadata"]["job_priority"]
     job_type, job_version = ctx['job_specification']['id'].split(':') 
