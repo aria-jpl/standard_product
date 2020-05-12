@@ -4,6 +4,20 @@
   "enable_dedup": false,
   "params" : [
     {
+      "name": "asf_ngap_download_queue",
+      "from": "submitter",
+      "type": "enum",
+      "default": "slc-sling-extract-asf",
+      "enumerables": ["slc-sling-extract-asf", "factotum-job_worker-asf_throttled", "NA"]
+    },
+    {
+      "name": "esa_download_queue",
+      "from": "submitter",
+      "type": "enum",
+      "default": "slc-sling-extract-scihub",
+      "enumerables": ["slc-sling-extract-scihub", "factotum-job_worker-apihub_throttled", "factotum-job_worker-scihub_throttled"]
+    },
+    {
       "name": "spyddder_sling_extract_version",
       "from": "submitter",
       "default": "develop",

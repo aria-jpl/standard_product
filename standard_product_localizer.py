@@ -764,8 +764,8 @@ def publish_data( acq_info, project, job_priority, dem_type, track, aoi_id, star
 
 
 def submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, acq_list, priority):
-    esa_download_queue = "spyddder-sling-extract-scihub"
-    asf_ngap_download_queue = "spyddder-sling-extract-asf"
+    esa_download_queue = "slc-sling-extract-scihub"
+    asf_ngap_download_queue = "slc-sling-extract-asf"
     job_type = "job-acquisition_localizer_multi:{}".format(multi_acquisition_localizer_version)
     job_version = multi_acquisition_localizer_version
     logger.info("submit_sling_job : acq_list %s, \nspyddder_sling_extract_version : %s, \nmulti_acquisition_localizer_version: %s, \nesa_download_queue : %s, \nasf_ngap_download_queue: %s, \npriority : %s, \njob_type : %s, \njob_version : %s" %(acq_list, spyddder_sling_extract_version, multi_acquisition_localizer_version, esa_download_queue, asf_ngap_download_queue, priority, job_type, job_version))
