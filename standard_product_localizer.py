@@ -432,6 +432,12 @@ def resolve_source(ctx_file):
     if "bbox" in ctx["input_metadata"]:
         bbox = ctx["input_metadata"]["bbox"]
 
+    #esa_download_queue = "slc-sling-extract-scihub"
+    #asf_ngap_download_queue = "slc-sling-extract-asf"
+
+    esa_download_queue = ctx["input_metadata"].get("esa_download_queue", "slc-sling-extract-scihub")
+    asf_ngap_download_queue = ctx["input_metadata"].get("asf_ngap_download_queue", "slc-sling-extract-asf")
+
     union_geojson = ctx["input_metadata"]["union_geojson"]
     direction = ctx["input_metadata"]["direction"] 
     platform = ctx["input_metadata"]["platform"]
@@ -457,9 +463,9 @@ def resolve_source(ctx_file):
         acq_type = "slave"
         acq_info[acq]=get_acq_object(acq, acq_type)
 
-    return sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox)
+    return sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, esa_download_queue, asf_ngap_download_queue)
 
-def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox):
+def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_version, project, job_priority, job_type, job_version, dem_type, track, starttime, endtime, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, esa_download_queue, asf_ngap_download_queue):
     '''
 	This function submits acquisition localizer jobs for mastrer and slaves.
     '''
@@ -475,7 +481,7 @@ def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_
     logger.info("job_priority : %s" %job_priority)
 
     logger.info("\nSubmitting acquisition localizer job for Masters : %s" %master_acqs)
-    all_done, data  = submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, master_acqs, job_priority)
+    all_done, data  = submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, master_acqs, job_priority, esa_download_queue, asf_ngap_download_queue)
     if not all_done:
         err_str = "Failed to download following SLCs :"
         for failed_acq_id in data:
@@ -486,7 +492,7 @@ def sling(acq_info, spyddder_sling_extract_version, multi_acquisition_localizer_
             
 
     logger.info("\nSubmitting acquisition localizer job for Slaves : %s" %slave_acqs)
-    all_done, data = submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, slave_acqs, job_priority)
+    all_done, data = submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, slave_acqs, job_priority, esa_download_queue, asf_ngap_download_queue)
     if not all_done:
         err_str = "Failed to download following SLCs :"
         for failed_acq_id in data:
@@ -763,9 +769,9 @@ def publish_data( acq_info, project, job_priority, dem_type, track, aoi_id, star
     return prod_dir
 
 
-def submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, acq_list, priority):
-    esa_download_queue = "slc-sling-extract-scihub"
-    asf_ngap_download_queue = "slc-sling-extract-asf"
+def submit_sling_job(spyddder_sling_extract_version, multi_acquisition_localizer_version, acq_list, priority, esa_download_queue, asf_ngap_download_queue):
+    #esa_download_queue = "slc-sling-extract-scihub"
+    #asf_ngap_download_queue = "slc-sling-extract-asf"
     job_type = "job-acquisition_localizer_multi:{}".format(multi_acquisition_localizer_version)
     job_version = multi_acquisition_localizer_version
     logger.info("submit_sling_job : acq_list %s, \nspyddder_sling_extract_version : %s, \nmulti_acquisition_localizer_version: %s, \nesa_download_queue : %s, \nasf_ngap_download_queue: %s, \npriority : %s, \njob_type : %s, \njob_version : %s" %(acq_list, spyddder_sling_extract_version, multi_acquisition_localizer_version, esa_download_queue, asf_ngap_download_queue, priority, job_type, job_version))
