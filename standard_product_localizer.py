@@ -435,8 +435,8 @@ def resolve_source(ctx_file):
     #esa_download_queue = "slc-sling-extract-scihub"
     #asf_ngap_download_queue = "slc-sling-extract-asf"
 
-    esa_download_queue = ctx["input_metadata"].get("esa_download_queue", "slc-sling-extract-scihub")
-    asf_ngap_download_queue = ctx["input_metadata"].get("asf_ngap_download_queue", "slc-sling-extract-asf")
+    esa_download_queue = get_value(ctx, "esa_download_queue", "slc-sling-extract-scihub")
+    asf_ngap_download_queue = get_value(ctx, "asf_ngap_download_queue", "slc-sling-extract-asf")
 
     union_geojson = ctx["input_metadata"]["union_geojson"]
     direction = ctx["input_metadata"]["direction"] 
