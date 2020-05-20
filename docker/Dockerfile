@@ -1,4 +1,4 @@
-FROM hysds/isce2:v2.3.3-es1
+FROM hysds/isce2:latest-es1
 
 MAINTAINER mkarim "Mohammed.R.Karim@jpl.nasa.gov"
 LABEL description="standard_product"
