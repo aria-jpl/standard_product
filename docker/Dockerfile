@@ -27,7 +27,8 @@ RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
 RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
-RUN $HOME/verdi/bin/pip install basemap
+#RUN $HOME/verdi/bin/pip install basemap
+conda install --yes basemap
 RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 
