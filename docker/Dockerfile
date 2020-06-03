@@ -28,9 +28,12 @@ RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
 #RUN $HOME/verdi/bin/pip install basemap
-RUN conda install --yes basemap
+
+USER root
+RUN /opt/conda/bin/conda install --yes basemap
 RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
+USER ops
 
 # create work directory
 RUN set -ex \
