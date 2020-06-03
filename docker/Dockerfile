@@ -31,7 +31,7 @@ RUN $HOME/verdi/bin/pip install elasticsearch
 
 USER root
 RUN /opt/conda/bin/conda install --yes basemap
-RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
+#RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 USER ops
 
