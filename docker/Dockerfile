@@ -37,7 +37,8 @@ USER root
 #RUN $HOME/verdi/bin/pip3 install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
 
 #USER root
-RUN /opt/conda/bin/conda install --yes basemap opencv
+#RUN /opt/conda/bin/conda install --yes basemap opencv
+RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 USER ops
