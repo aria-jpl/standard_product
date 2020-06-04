@@ -27,7 +27,8 @@ RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
 RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
-RUN $HOME/verdi/bin/pip install h5py
+RUN $HOME/verdi/bin/pip uninstall h5py
+RUN $HOME/verdi/bin/pip install --no-cache-dir h5py
 #RUN $HOME/verdi/bin/pip install basemap
 
 USER root
