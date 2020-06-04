@@ -10,6 +10,7 @@ export PYTHONPATH=${PYTHONPATH}:${HOME}/verdi/etc
 # source ISCE env
 export GMT_HOME=/usr/local/gmt
 export ARIAMH_HOME=$HOME/ariamh
+
 export STANDARD_PRODUCT_HOME=$HOME/standard_product
 source $ARIAMH_HOME/isce.sh
 source $ARIAMH_HOME/giant.sh
@@ -20,6 +21,7 @@ export PYTHONPATH=${HOME}/verdi/etc:$ISCE_HOME/applications:$ISCE_HOME/component
 export PATH=$BASE_PATH:$TROPMAP_HOME:$GMT_HOME/bin:$PATH
 
 # source environment
+source /opt/isce2/isce_env.sh
 source $HOME/verdi/bin/activate
 
 
