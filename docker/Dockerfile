@@ -41,7 +41,7 @@ USER root
 RUN $HOME/verdi/bin/pip uninstall basemap
 RUN $HOME/verdi/bin/pip uninstall opencv
 RUN /opt/conda/bin/conda install --yes basemap opencv
-RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
+#RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 USER ops
 RUN $HOME/verdi/bin/pip install opencv-python
