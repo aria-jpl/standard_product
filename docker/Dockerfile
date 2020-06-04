@@ -39,6 +39,7 @@ RUN /opt/conda/bin/conda install --yes basemap opencv
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 USER ops
+RUN $HOME/verdi/bin/pip install h5py==2.6.0
 # create work directory
 RUN set -ex \
  && mkdir -p /data/work \
