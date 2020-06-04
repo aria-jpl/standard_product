@@ -38,7 +38,9 @@ USER root
 
 #USER root
 #RUN /opt/conda/bin/conda install --yes basemap opencv
-RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
+RUN $HOME/verdi/bin/pip uninstall basemap
+RUN $HOME/verdi/bin/pip uninstall opencv
+RUN /opt/conda/bin/conda install --yes basemap opencv
 RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 USER ops
