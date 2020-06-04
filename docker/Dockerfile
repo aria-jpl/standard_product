@@ -30,7 +30,7 @@ RUN $HOME/verdi/bin/pip install elasticsearch
 #RUN $HOME/verdi/bin/pip install basemap
 
 USER root
-RUN yum install libgeos-3.6.2 libgeos-c1v5 libgeos-dev
+RUN yum install libgeos-3.6.2
 #pip3 install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
 RUN $HOME/verdi/bin/pip3 install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
 
