@@ -23,7 +23,7 @@ USER ops
 COPY . /home/ops/verdi/ops/standard_product
 
 USER root
-RUN /opt/conda/bin/conda install --yes opencv
+RUN /opt/conda/bin/conda install --yes basemap
 
 USER ops
 RUN $HOME/verdi/bin/pip install shapely
