@@ -32,6 +32,7 @@ RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
 RUN $HOME/verdi/bin/pip install geos
+RUN yum install libgeos-dev
 RUN $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/archive/master.zip
 #RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
