@@ -33,7 +33,10 @@ RUN $HOME/verdi/bin/pip install elasticsearch
 #RUN $HOME/verdi/bin/pip install --user git+https://github.com/matplotlib/basemap.git
 #RUN $HOME/verdi/bin/pip install geos
 #RUN yum install libgeos-dev
-RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+#RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+
+user root
+
 RUN yum install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/
 RUN rpm -Uvh epel-release*rpm
 RUN yum install geos-devel
@@ -41,6 +44,8 @@ RUN $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/arc
 #RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
+
+user ops
 # create work directory
 RUN set -ex \
  && mkdir -p /data/work \
