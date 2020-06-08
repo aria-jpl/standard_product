@@ -22,8 +22,6 @@ USER ops
 # copy packages
 COPY . /home/ops/verdi/ops/standard_product
 
-USER root
-RUN yum install libgeos-dev
 #RUN /opt/conda/bin/conda install --yes basemap
 
 USER ops
@@ -32,10 +30,10 @@ RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
 RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
-RUN $HOME/verdi/bin/pip install --user git+https://github.com/matplotlib/basemap.git
+#RUN $HOME/verdi/bin/pip install --user git+https://github.com/matplotlib/basemap.git
 #RUN $HOME/verdi/bin/pip install geos
 #RUN yum install libgeos-dev
-#RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
 RUN yum install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/
 RUN rpm -Uvh epel-release*rpm
 RUN yum install geos-devel
