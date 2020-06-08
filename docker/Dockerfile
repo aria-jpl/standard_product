@@ -34,7 +34,9 @@ RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
 #RUN $HOME/verdi/bin/pip install geos
 #RUN yum install libgeos-dev
-RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+#RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+RUN yum install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/
+RUN rpm -Uvh epel-release*rpm
 RUN yum install geos-devel
 RUN $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/archive/master.zip
 #RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
