@@ -32,6 +32,7 @@ RUN $HOME/verdi/bin/pip install 'fiona==1.7.13'
 RUN $HOME/verdi/bin/pip install 'pyproj==1.9.6'
 RUN $HOME/verdi/bin/pip install 'geopandas==0.6.3'
 RUN $HOME/verdi/bin/pip install elasticsearch
+RUN $HOME/verdi/bin/pip install --user git+https://github.com/matplotlib/basemap.git
 #RUN $HOME/verdi/bin/pip install geos
 #RUN yum install libgeos-dev
 #RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
