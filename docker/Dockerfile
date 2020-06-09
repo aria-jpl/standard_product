@@ -8,7 +8,9 @@ ARG id
 ARG gid
 
 
-user root
+
+user roota
+RUN $HOME/verdi/bin/pip install opencv-python
 RUN /opt/conda/bin/conda install --yes basemap
 RUN /opt/conda/bin/conda install --yes opencv
 
