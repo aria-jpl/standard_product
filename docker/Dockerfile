@@ -12,8 +12,8 @@ RUN set -ex \
  && . /opt/conda/bin/activate root \
  && $HOME/verdi/bin/pip install opencv-python \
  #&& sudo yum install libgeos-3.5.0 \
- && sudo yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
- && sudo yum install geos-devel \
+ && sudo yum install -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
+ && sudo yum install -y geos-devel \
  && $HOME/verdi/bin/pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
 
 
