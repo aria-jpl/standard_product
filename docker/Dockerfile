@@ -11,7 +11,7 @@ ARG gid
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && $HOME/verdi/bin/pip install opencv-python \
- && sudo yum install -y libgeos-3.6.2 \
+ #&& sudo yum install -y libgeos-3.6.2 \
  && sudo yum install -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
  && sudo yum install -y geos-devel \
  && $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/archive/master.zip
