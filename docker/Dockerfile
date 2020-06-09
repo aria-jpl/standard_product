@@ -41,7 +41,7 @@ user root
 #RUN rpm -Uvh epel-release*rpm
 #RUN yum install geos-devel
 #RUN $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/archive/master.zip
-RUN /opt/conda/bin/conda install --yes h5py basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng
+RUN /opt/conda/bin/conda install --yes basemap opencv
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 
