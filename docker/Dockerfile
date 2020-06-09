@@ -12,8 +12,9 @@ ARG gid
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && $HOME/verdi/bin/pip install opencv-python \
- && /opt/conda/bin/conda update --all \
-&& /opt/conda/bin/conda install -c conda-forge basemap
+ && $HOME/verdi/bin/pip install libgeos-3.5.0 \
+ && $HOME/verdi/bin/pip install libgeos-dev \
+ && $HOME/verdi/bin/pip install https://github.com/matplotlib/basemap/archive/master.zip
 
 
 # as ops user
