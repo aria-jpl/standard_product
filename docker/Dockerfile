@@ -11,7 +11,7 @@ ARG gid
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && $HOME/verdi/bin/pip install opencv-python \
- && sudo yum install libgeos-3.5.0 libgeos-c1v5 libgeos-dev \
+ && sudo yum install libgeos-3.5.0 \
  && $HOME/verdi/bin/pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz
 
 
