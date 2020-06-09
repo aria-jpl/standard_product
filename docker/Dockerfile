@@ -12,6 +12,7 @@ ARG gid
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && $HOME/verdi/bin/pip install opencv-python \
+ && opt/conda/bin/conda update --all \
 && /opt/conda/bin/conda install -c conda-forge basemap
 
 
