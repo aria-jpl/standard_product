@@ -7,6 +7,14 @@ ARG git_oauth_token
 ARG id
 ARG gid
 
+
+user root
+RUN /opt/conda/bin/conda install --yes basemap
+RUN /opt/conda/bin/conda install --yes opencv
+
+
+
+
 # as ops user
 USER ops
 #RUN set -ex && \
@@ -35,13 +43,13 @@ RUN $HOME/verdi/bin/pip install elasticsearch
 #RUN yum install libgeos-dev
 #RUN yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
 
-user root
+#user root
 
 #RUN yum install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/
 #RUN rpm -Uvh epel-release*rpm
 #RUN yum install geos-devel
 #RUN $HOME/verdi/bin/pip install --user https://github.com/matplotlib/basemap/archive/master.zip
-RUN /opt/conda/bin/conda install --yes basemap opencv
+#RUN /opt/conda/bin/conda install --yes basemap opencv
 #RUN ln -s /opt/conda/pkgs/basemap-*/share/basemap $HOME/verdi/share/basemap
 
 
