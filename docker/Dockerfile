@@ -9,7 +9,8 @@ ARG gid
 
 
 
-user roota
+user root
+. /opt/conda/bin/activate root
 RUN $HOME/verdi/bin/pip install opencv-python
 RUN /opt/conda/bin/conda install --yes basemap
 RUN /opt/conda/bin/conda install --yes opencv
