@@ -7,7 +7,6 @@ ARG git_oauth_token
 ARG id
 ARG gid
 
-USER root
 
 RUN set -ex \
  && . /opt/conda/bin/activate root \
