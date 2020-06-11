@@ -11,7 +11,7 @@
   "soft_time_limit": 600,
   "time_limit": 900,
   "disk_usage": "2GB",
-  "recommended-queues": [ "standard_product-s1gunw-acqlist_evaluator_ifgcfg" ],
+  "recommended-queues": [ "aria-standard_product-evaluator", "standard_product-s1gunw-acqlist_evaluator_ifgcfg" ],
   "params" : [
     {
         "name": "ifgcfg_version",
