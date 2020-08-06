@@ -1,5 +1,5 @@
 {
-  "command":"/home/ops/verdi/ops/standard_product/initiate_standard_product_enumurator.sh",
+  "command":"/home/ops/verdi/ops/standard_product/initiate_standard_product_enumurator_geojson.sh",
   "imported_worker_files": {
     "$HOME/.netrc": "/home/ops/.netrc",
     "$HOME/.aws": "/home/ops/.aws",
