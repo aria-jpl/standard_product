@@ -57,12 +57,12 @@
     },
     {
       "name": "starttime",
-      "from": "dataset_jpath:_source.starttime",
+      "from": "submitter",
       "type": "text"
     },
     {
       "name": "endtime",
-      "from": "dataset_jpath:_source.endtime",
+      "from": "submitter",
       "type": "text"
     },
     {
