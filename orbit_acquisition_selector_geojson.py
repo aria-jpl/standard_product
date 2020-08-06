@@ -774,6 +774,8 @@ def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_d
     orbit_aoi_data = {}
     selected_track_acqs = []
     result_track_acqs = []
+    aoi_id = DEFAULT_AOI
+
     try:
         selected_track_acqs, result_track_acqs = get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson)
 
@@ -787,12 +789,12 @@ def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_d
         # ensure highest priority is assigned if multiple AOIs resolve the acquisition
         #if acq['id'] in acq_info and acq_info[acq['id']].get('priority', 0) > aoi_priority:
             #continue
-        aoi_data['aoi_id'] = DEFAULT_AOI
+        aoi_data['aoi_id'] = aoi_id
         aoi_data['aoi_location'] =  location_geojson
         aoi_data['priority'] = aoi_priority
         aoi_data['selected_track_acqs'] = selected_track_acqs
         aoi_data['result_track_acqs'] = result_track_acqs
-        orbit_aoi_data[aoi['id']] = aoi_data
+        orbit_aoi_data[aoi_id] = aoi_data
         #acq_info[aoi_data['id']] = acq
         #aoi_acq[aoi] = acq_info
         #logger.info("Acquistions to localize: {}".format(json.dumps(acq_info, indent=2)))
@@ -875,7 +877,7 @@ def get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, thres
                 }
             }
         }
-        logger.info(query)
+        logger.info(json.dumps(query, indent=4))
         acqs = [i['fields']['partial'][0] for i in query_es(query, es_index)]
         logger.info("Found {} acqs for {}: {}".format(len(acqs), aoi_id,
                     json.dumps([i['id'] for i in acqs], indent=2)))
@@ -1016,14 +1018,16 @@ def resolve_acqs(ctx_file):
     if "aoi_name" in ctx:
         orbit_aoi_data = query_aoi_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, selected_aoi_list)
     elif "location_geojson":
-        location_geojson = ctx["location_geojson"]
+        location_geojson =  json.loads(ctx["location_geojson"])
+        logger.info("location_geojson : {}".format(location_geojson))
+        '''
         try:
             json.loads(location_geojson)
         except Exception as err:
             err_msg = "Invalid input geojson : {} : {}".format(str(err), location_geojson)
             logger.info(err_msg)
             raise Exception(err_msg)
-  
+        '''
         orbit_aoi_data = query_geojson_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson)
     #osaka.main.get("http://aux.sentinel1.eo.esa.int/POEORB/2018/09/15/S1A_OPER_AUX_POEORB_OPOD_20180915T120754_V20180825T225942_20180827T005942.EOF")
     #logger.info(orbit_aoi_data)
