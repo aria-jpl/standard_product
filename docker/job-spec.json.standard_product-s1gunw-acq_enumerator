@@ -4,6 +4,7 @@
     "$HOME/.netrc": "/home/ops/.netrc",
     "$HOME/.aws": "/home/ops/.aws",
     "$HOME/verdi/etc/settings.conf": "/home/ops/ariamh/conf/settings.conf",
+    "$HOME/verdi/etc/settings.conf": "/home/ops/verdi/ops/standard_product/settings.conf",
     "$HOME/verdi/etc/settings.json": "/home/ops/verdi/ops/standard_product/settings.json"
   },
   "disk_usage":"100GB",
