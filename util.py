@@ -328,6 +328,25 @@ def get_dataset_json(met, version):
         "endtime": met['sensingStop'],
     }
 
+def is_request_acqlist(tag_list):
+    is_request = False
+
+    if len(tag_list)==0:
+        return False
+    for tag in tag_list:
+        if tag.startswith("request"):
+            is_request = True
+            break
+
+    return is_request
+
+def get_request_id(tag_list):
+    request_id = None
+    for tag in tag_list:
+        if tag.startswith("request"):
+            request_id = tag.strip()
+            break
+    return request_id
 
 def extract_scihub_ipf(met):
     user = None

@@ -1028,7 +1028,7 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     direction = candidate_pair['direction']
     platform = orbit_data['platform'] 
     logger.info("publish_data : orbitNumber : %s, direction : %s" %(orbitNumber, direction))
-    is_request = is_request_acqlist()
+    is_request = util.is_request_acqlist(TAG_LIST)
 
     project = publish_job_data["project"] 
     '''
@@ -1293,20 +1293,6 @@ def update_dateformat2(d):
     logger.info("update_dateformat out: %s" %d)
     return d
 
-def is_request_acqlist():
-    is_request = False
-
-    if len(TAG_LIST)==0:
-        return False
-    for tag in TAG_LIST:
-        if tag.startswith("request"):
-            is_request = True
-            break
-
-    return is_request
-
-
-
 def publish_result(reference_result, secondary_result, id_hash):
   
     version = "v2.0.0"
@@ -1315,7 +1301,7 @@ def publish_result(reference_result, secondary_result, id_hash):
     orbit_type = 'poeorb'
     aoi_id = reference_result['aoi'].strip().replace(' ', '_')
     logger.info("aoi_id : %s" %aoi_id)
-    is_request = is_request_acqlist()
+    is_request = util.is_request_acqlist(TAG_LIST)
 
     logger.info("secondary_result.get('master_count', 0) : %s" %secondary_result.get('master_count', 0))
     logger.info("secondary_result.get('slave_count', 0) : %s" %secondary_result.get('slave_count', 0))
