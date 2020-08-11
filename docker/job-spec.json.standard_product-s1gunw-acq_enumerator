@@ -42,6 +42,10 @@
       "destination": "context"
     },
     {
+      "name": "machine_tags",
+      "destination": "context"
+    },
+    {
       "name": "skipDays",
       "destination": "context"
     },

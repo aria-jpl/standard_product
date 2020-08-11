@@ -296,7 +296,7 @@ def black_list_check(candidate_pair, black_list):
         passed = False
     return passed
 
-def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi, result_file, master_result):
+def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi, result_file, master_result, tag_list = []):
     matched = False
     candidate_pair_list = []
     result['matched'] = matched
@@ -319,8 +319,8 @@ def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_cou
                 result['fail_reason'] = err_msg
                 result['failed_orbit'] = 'secondary'
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(slave_acqs))
-                write_result_file(result_file, result)
-                publish_result(master_result, result, id_hash)
+                write_result_file(result_file, result, tag_list)
+                publish_result(master_result, result, id_hash, tag_list)
 
 
                 return False, [], result
@@ -338,9 +338,9 @@ def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_cou
                     result['result'] = False
                     result['fail_reason'] = err_msg
                     id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(slave_acqs))
-                    write_result_file(result_file, result)
+                    write_result_file(result_file, result, tag_list)
                     result['failed_orbit'] = 'secondary'
-                    publish_result(master_result, result, id_hash)
+                    publish_result(master_result, result, id_hash, tag_list)
                     return False, [], result
 
     elif slave_ipf_count > 1 and master_ipf_count == 1:
@@ -356,8 +356,8 @@ def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_cou
                 result['fail_reason'] = err_msg
                 result['failed_orbit'] = 'secondary'
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(slave_acqs))
-                write_result_file(result_file, result)
-                publish_result(master_result, result, id_hash)
+                write_result_file(result_file, result, tag_list)
+                publish_result(master_result, result, id_hash, tag_list)
                 return False, [], result
             else:
                 bl_passed = black_list_check(candidate_pair, aoi_blacklist)
@@ -372,9 +372,9 @@ def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_cou
                     result['result'] = False
                     result['fail_reason'] = err_msg
                     id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(slave_acqs))
-                    write_result_file(result_file, result)
+                    write_result_file(result_file, result, tag_list)
                     result['failed_orbit'] = 'secondary'
-                    publish_result(master_result, result, id_hash)
+                    publish_result(master_result, result, id_hash, tag_list)
 
                     return False, [], result
     else:
@@ -383,9 +383,9 @@ def process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_cou
         result['result'] = False
         result['fail_reason'] = err_msg
         id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(slave_acqs))
-        write_result_file(result_file, result)
+        write_result_file(result_file, result, tag_list)
         result['failed_orbit'] = 'secondary'
-        publish_result(master_result, result, id_hash)
+        publish_result(master_result, result, id_hash, tag_list)
         logger.info("Candidate Pair NOT SELECTED")
 
     if len(candidate_pair_list) == 0:
@@ -403,6 +403,7 @@ def enumerate_acquisations(orbit_acq_selections):
     logger.info("\n\n\nENUMERATE\n")
     #logger.info("orbit_dt : %s" %orbit_dt)
     job_data = orbit_acq_selections["job_data"]
+    tag_list = orbit_acq_selections.get('tag_list', [])
     MIN_MATCH = job_data['minMatch']
     threshold_pixel = job_data['threshold_pixel']
     skip_days = job_data["skip_days"]
@@ -439,7 +440,7 @@ def enumerate_acquisations(orbit_acq_selections):
             if len(list(selected_track_acqs[track].keys())) <=0:
                 logger.info("\nenumerate_acquisations : No selected data for track : %s " %track)
                 continue
-            min_max_count, track_candidate_pair_list = get_candidate_pair_list(aoi_id, track, selected_track_acqs[track], aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs[track], orbit_file)
+            min_max_count, track_candidate_pair_list = get_candidate_pair_list(aoi_id, track, selected_track_acqs[track], aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs[track], orbit_file, tag_list)
             logger.info("\n\nAOI ID : %s MIN MAX count for track : %s = %s" %(aoi_id, track, min_max_count))
             if min_max_count>0:
                 print_candidate_pair_list_per_track(track_candidate_pair_list)
@@ -478,7 +479,7 @@ def get_acq_ids(acqs):
         acq_ids.append(acq_id)
     return acq_ids
 
-def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs, master_orbit_file):
+def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days, orbit_data, job_data, aoi_blacklist, threshold_pixel, acquisition_version, result_track_acqs, master_orbit_file, tag_list=[]):
     logger.info("get_candidate_pair_list : %s Orbits" %len(list(selected_track_acqs.keys())))
     candidate_pair_list = []
     orbit_ipf_dict = {}
@@ -520,7 +521,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
             result['fail_reason'] = "master_pol Error : "+ str(err)
             logger.info(str(err))
             id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), [])
-            publish_result(master_result, result, id_hash)
+            publish_result(master_result, result, id_hash, tag_list)
             continue
 
         result['reference_polarisation'] = master_pol
@@ -534,7 +535,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
            
             logger.info(str(err))
             id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), [])
-            publish_result(master_result, result, id_hash)
+            publish_result(master_result, result, id_hash, tag_list)
             raise RuntimeError(str(err))
  
 
@@ -558,7 +559,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
             result['fail_reason'] = str(err)
             logger.info(str(err))
             id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), [])
-            publish_result(master_result, result, id_hash)
+            publish_result(master_result, result, id_hash, tag_list)
             raise RuntimeError(str(err))
         logger.info("master_starttime : %s" %master_starttime)
         logger.info("Before %s skip days, master_starttime : %s" %(skip_days, util.get_past_isoformat_date(master_starttime, skip_days)))
@@ -580,7 +581,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
             logger.info(err_msg)
             result['union_geojson'] = master_union_geojson
             id_hash = util.get_ifg_hash_from_acqs(master_acq_ids, [])
-            publish_result(master_result, result, id_hash)
+            publish_result(master_result, result, id_hash, tag_list)
             continue
 
         #matched_acqs = util.create_acqs_from_metadata(process_query(query))
@@ -666,11 +667,11 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                     logger.info("Removing the acquisitions of orbitnumber : %s for failing water mask test" %slave_track_dt)
                
                     rejected_slave_track_dt.append(slave_track_dt)
-                    write_result_file(result_file, result)
+                    write_result_file(result_file, result, tag_list)
                     result['union_geojson'] = master_union_geojson
                     result['failed_orbit'] = 'secondary'
                     #id_hash = util.get_ifg_hash(master_acq_ids, [], track, aoi)
-                    publish_result(master_result, result, id_hash)
+                    publish_result(master_result, result, id_hash, tag_list)
                     logger.info("Skipping as Water Mast Test Failed")
                     continue
 
@@ -689,9 +690,9 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                 result['dt'] = slave_track_dt 
                 result['union_geojson'] = master_union_geojson
                 #id_hash = util.get_ifg_hash(master_acq_ids, [], track, aoi)
-                write_result_file(result_file, result)
+                write_result_file(result_file, result, tag_list)
                 result['failed_orbit'] = 'secondary'
-                publish_result(master_result, result, id_hash)
+                publish_result(master_result, result, id_hash, tag_list)
                 raise RuntimeError(err_msg)
 
                 
@@ -708,7 +709,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                 logger.info(str(err))
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), slave_ids)
                 result['failed_orbit'] = 'secondary'
-                publish_result(master_result, result, id_hash)
+                publish_result(master_result, result, id_hash, tag_list)
                 raise RuntimeError("Error in Slave Ipf Count : %s" %str(err))
                 
             logger.info("slave_ipf_count : %s" %slave_ipf_count)
@@ -738,7 +739,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                 result['failed_orbit'] = 'secondary'
                 logger.info(err_msg)
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(selected_slave_acqs))
-                publish_result(master_result, result, id_hash)
+                publish_result(master_result, result, id_hash, tag_list)
                 continue
 
             slave_pol = None
@@ -749,7 +750,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                 result['fail_reason'] = "slave_pol Error: " +str(err)
                 logger.info(str(err))
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(selected_slave_acqs))
-                publish_result(master_result, result, id_hash)
+                publish_result(master_result, result, id_hash, tag_list)
                 continue
 
             if master_pol != slave_pol:
@@ -758,21 +759,21 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                 result['failed_orbit'] = 'secondary'
                 logger.info(err_msg)
                 id_hash = util.get_ifg_hash_from_acqs(get_acq_ids(master_acqs), get_acq_ids(selected_slave_acqs))
-                publish_result(master_result, result, id_hash)
+                publish_result(master_result, result, id_hash, tag_list)
                 continue
 
             logger.info("Master Pol : %s Slave Polarization : %s" %(master_pol, slave_pol))
 
-            matched, orbit_candidate_pair, result = process_enumeration(master_acqs, master_ipf_count, selected_slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi_id, result_file, master_result)            
+            matched, orbit_candidate_pair, result = process_enumeration(master_acqs, master_ipf_count, selected_slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi_id, result_file, master_result, tag_list)            
             logger.info("{} : {} : {}".format(matched, orbit_candidate_pair, result))
             result['matched'] = matched
             result['candidate_pairs'] = orbit_candidate_pair
-            write_result_file(result_file, result)
+            write_result_file(result_file, result, tag_list)
             if matched:
                 for candidate_pair in orbit_candidate_pair:
                     candidate_pair["master_track_dt"] = track_dt
                     candidate_pair["slave_trck_dt"] = slave_track_dt
-                    publish_initiator_pair(candidate_pair, job_data, orbit_data, aoi_id, master_orbit_file, orbit_file, master_result, result)   
+                    publish_initiator_pair(candidate_pair, job_data, orbit_data, aoi_id, master_orbit_file, orbit_file, tag_list, master_result, result)   
                     candidate_pair_list.append(orbit_candidate_pair)
 
                 min_max_count = min_max_count + 1
@@ -782,7 +783,7 @@ def get_candidate_pair_list(aoi, track, selected_track_acqs, aoi_data, skip_days
                     return min_max_count, candidate_pair_list
     return min_max_count, candidate_pair_list
 
-def write_result_file(result_file, result):
+def write_result_file(result_file, result, tag_list):
     try:
         with open(result_file, 'a') as fo:
             cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -793,7 +794,7 @@ def write_result_file(result_file, result):
         traceback.print_exc()
 
 
-def get_candidate_pair_list_by_orbitnumber(track, selected_track_acqs, aoi_data, orbit_data, job_data, aoi_blacklist, threshold_pixel):
+def get_candidate_pair_list_by_orbitnumber(track, selected_track_acqs, aoi_data, orbit_data, job_data, aoi_blacklist, threshold_pixel, tag_list=[]):
     logger.info("get_candidate_pair_list : %s Orbits" %len(list(selected_track_acqs.keys())))
     candidate_pair_list = []
     orbit_ipf_dict = {}
@@ -857,13 +858,13 @@ def get_candidate_pair_list_by_orbitnumber(track, selected_track_acqs, aoi_data,
             result['secondary_ipf_count'] = slave_ipf_count
             
 
-            matched, orbit_candidate_pair = process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi_id, result_file, master_result)            
+            matched, orbit_candidate_pair = process_enumeration(master_acqs, master_ipf_count, slave_acqs, slave_ipf_count, direction, aoi_location, aoi_blacklist, job_data, result, track, aoi_id, result_file, master_result, tag_list)            
             result['matched'] = matched
             result['candidate_pairs'] = orbit_candidate_pair
-            write_result_file(result_file, result)
+            write_result_file(result_file, result, tag_list)
             if matched:
                 for candidate_pair in orbit_candidate_pair:
-                    publish_initiator_pair(candidate_pair, job_data, orbit_data)
+                    publish_initiator_pair(candidate_pair, job_data, orbit_data, tag_list)
                     logger.info("\n\nSUCCESSFULLY PUBLISHED : %s" %candidate_pair)
 
                 candidate_pair_list.append(orbit_candidate_pair)
@@ -1007,7 +1008,7 @@ def publish_initiator(candidate_pair_list, job_data):
         #publish_initiator_pair(candidate_pair, job_data)
 '''
 
-def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,  master_orbit_file, slave_orbit_file, reference_result=None, secondary_result = None):
+def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,  master_orbit_file, slave_orbit_file, tag_list = [], reference_result=None, secondary_result = None):
   
 
     logger.info("\nPUBLISH CANDIDATE PAIR : %s" %candidate_pair)
@@ -1216,6 +1217,8 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     md['slave_orbit_file'] = os.path.basename(slave_orbit_file)
     md['id_hash'] = id_hash[0:4]
     md['full_id_hash'] = id_hash
+    if len(tag_list)>0:
+        md['tags'] = tag_list
 
  
     try:
@@ -1253,7 +1256,7 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     secondary_result['slave_acquisitions'] = slave_acquisitions
     secondary_result['master_scenes'] = master_slcs
     secondary_result['slave_scenes'] = slave_slcs
-    publish_result(reference_result, secondary_result, id_hash)
+    publish_result(reference_result, secondary_result, id_hash, tag_list)
 
 def update_dateformat(d):
     logger.info("update_dateformat in: %s" %d)
@@ -1284,7 +1287,7 @@ def update_dateformat2(d):
     return d
 
 
-def publish_result(reference_result, secondary_result, id_hash):
+def publish_result(reference_result, secondary_result, id_hash, tag_list=[]):
   
     version = "v2.0.0"
     logger.info("\nPUBLISH RESULT")
@@ -1368,6 +1371,7 @@ def publish_result(reference_result, secondary_result, id_hash):
     md['reference_scenes'] = secondary_result.get('master_scenes', [])
     md['secondary_scenes'] = secondary_result.get('slave_scenes', [])
     md['failed_orbit'] = secondary_result.get('failed_orbit', '')
+    md['tags'] = tag_list
 
     logger.info("type(md['starttime']) : %s:" %type(md['starttime']))
     logger.info("type(md['reference_date']) : %s:" %type(md['reference_date']))

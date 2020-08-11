@@ -533,6 +533,7 @@ def publish_result(reference_result, id_hash):
     md['secondary_scenes'] = reference_result.get('slave_scenes', [])
     md['secondary_date'] = update_dateformat(reference_result.get('dt', ''))
     md['failed_orbit'] = reference_result.get('failed_orbit', '')
+    md['tags'] =  reference_result.get('tags', [])
 
     with open(met_file, 'w') as f: json.dump(md, f, indent=2)
 
@@ -565,7 +566,7 @@ def create_acqs_from_metadata(frames):
             acqs.append(acq_obj)
     return acqs
 
-def get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list, location_geojson, aoi_id = None):
+def get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list, location_geojson, tag_list, aoi_id = None):
     #util.print_acquisitions(aoi['id'], util.create_acqs_from_metadata(acqs))
 
     if not aoi_id:
@@ -637,6 +638,7 @@ def get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, or
             result['list_slave_dt'] = track_dt
             result['master_count'] = 1
             result['slave_count'] = 0
+            result['tags'] = tag_list
  
             if selected:
                 #logger.info("SELECTED : aoi : %s track : %s  track_dt : %s" %(aoi['id'], track, track_dt))
@@ -662,7 +664,7 @@ def get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, or
             try:
                 with open(result_file, 'a') as fo:
                     cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    cw.writerow([result.get('dt', ''), result.get('orbit_name', ''), "Primary", result.get('track', ''),result.get('Track_POEORB_Land', '') , result.get('ACQ_Union_POEORB_Land', ''), result.get('delta_area', ''), result.get('res', ''), result.get('area_threshold_passed', ''), result.get('WATER_MASK_PASSED', ''), result.get('primary_ipf_count', ''), result.get('secondary_ipf_count', ''), result.get('BL_PASSED', ''), result.get('matched', ''), result.get('candidate_pairs', ''), result.get('fail_reason', ''), result.get('comment', ''), result.get('Track_AOI_Intersection', ''), result.get('ACQ_POEORB_AOI_Intersection', '')])
+                    cw.writerow([result.get('dt', ''), result.get('orbit_name', ''), "Primary", result.get('track', ''),result.get('Track_POEORB_Land', '') , result.get('ACQ_Union_POEORB_Land', ''), result.get('delta_area', ''), result.get('res', ''), result.get('area_threshold_passed', ''), result.get('WATER_MASK_PASSED', ''), result.get('primary_ipf_count', ''), result.get('secondary_ipf_count', ''), result.get('BL_PASSED', ''), result.get('matched', ''), result.get('candidate_pairs', ''), result.get('fail_reason', ''), result.get('comment', ''), result.get('Track_AOI_Intersection', ''), result.get('ACQ_POEORB_AOI_Intersection', ''), tag_list])
 
             except Exception as err:
                 logger.info("\n\nERROR Writing to csv file : %s" %str(err))
@@ -717,7 +719,7 @@ def get_covered_acquisitions(aoi, acqs, orbit_file):
 
     return selected_track_acqs
 
-def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, selected_aoi_list):
+def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, selected_aoi_list, tag_list=[]):
     """Query ES for active AOIs that intersect starttime and endtime and 
        find acquisitions that intersect the AOI polygon for the platform."""
     #aoi_acq = {}
@@ -739,7 +741,7 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
         sys.exit(0)
     for aoi in aois:
         logger.info("aoi: {}".format(aoi['id']))
-        selected_track_acqs, result_track_acqs = get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, aoi['location'], aoi['id'])
+        selected_track_acqs, result_track_acqs = get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, aoi['location'], tag_list, aoi['id'])
         
         if len(list(selected_track_acqs.keys()))==0:
             logger.info("Nothing selected from AOI %s " %aoi['id'])
@@ -767,7 +769,7 @@ def query_aoi_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, 
     return orbit_aoi_data
 
 
-def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson):
+def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson, tag_list=[]):
     """Query ES for active AOIs that intersect starttime and endtime and
        find acquisitions that intersect the location geojson for the platform."""
     #aoi_acq = {}
@@ -777,7 +779,7 @@ def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_d
     aoi_id = DEFAULT_AOI
 
     try:
-        selected_track_acqs, result_track_acqs = get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson)
+        selected_track_acqs, result_track_acqs = get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson, tag_list)
 
         if len(list(selected_track_acqs.keys()))==0:
             logger.info("Exiting as nothing selected from geojson %s " %location_geojson)
@@ -807,7 +809,7 @@ def query_geojson_acquisitions(starttime, endtime, platform, orbit_file, orbit_d
         sys.exit(0)
     return orbit_aoi_data
 
-def get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson, aoi_id = None):
+def get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson, tag_list=[], aoi_id = None):
  
     selected_track_acqs = {}
     result_track_acqs = {}
@@ -893,9 +895,9 @@ def get_location_data(starttime, endtime, platform, orbit_file, orbit_dir, thres
         result_file = "RESULT_SUMMARY_%s.csv" %aoi_id
         with open(result_file, 'w') as fo:
             cw = csv.writer(fo, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            cw.writerow(["Date", "Orbit", "Type", "Track","Track_Land","Total_Acquisition_Land", "delta_area_sqkm", "delta_area_pixel", "area_threshold_passed", "Orbit_Quality_Test_Passed", "Reference_Unique_IPF_Count", "Secondary_Unique_IPF_Count",  "BlackList_Test_Passed", "Enumeration_Passed", "Candidate_Pairs", "Failure_Reason", "comment","Track_AOI_Intersection", "ACQ_POEORB_AOI_Intersection"])
+            cw.writerow(["Date", "Orbit", "Type", "Track","Track_Land","Total_Acquisition_Land", "delta_area_sqkm", "delta_area_pixel", "area_threshold_passed", "Orbit_Quality_Test_Passed", "Reference_Unique_IPF_Count", "Secondary_Unique_IPF_Count",  "BlackList_Test_Passed", "Enumeration_Passed", "Candidate_Pairs", "Failure_Reason", "comment","Track_AOI_Intersection", "ACQ_POEORB_AOI_Intersection", "Machine_Tags"])
 
-        selected_track_acqs, result_track_acqs = get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list, location_geojson, aoi_id)
+        selected_track_acqs, result_track_acqs = get_covered_acquisitions_by_track_date(acqs, threshold_pixel, orbit_file, orbit_dir, platform, result_file, selected_track_list, location_geojson, tag_list, aoi_id)
     except Exception as err:
         logger.info("Error in get_location_data : {}".format(str(err)))
         traceback.print_exc()
@@ -973,6 +975,10 @@ def resolve_acqs(ctx_file):
     job_type, job_version = ctx['job_specification']['id'].split(':')
     skip_days = int(ctx.get("skipDays", 0))
     selected_track_list = []
+    tag_list = []
+    if "machine_tags" in ctx and ctx["machine_tags"] is not None:
+        tag_list = ctx["machine_tags"].strip().split(',')
+    
 
     try:
         if "track_numbers" in ctx and ctx["track_numbers"] is not None:
@@ -1016,7 +1022,7 @@ def resolve_acqs(ctx_file):
     orbit_aoi_data = None
     
     if "aoi_name" in ctx:
-        orbit_aoi_data = query_aoi_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, selected_aoi_list)
+        orbit_aoi_data = query_aoi_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, selected_aoi_list, tag_list)
     elif "location_geojson":
         location_geojson =  json.loads(ctx["location_geojson"])
         logger.info("location_geojson : {}".format(location_geojson))
@@ -1028,7 +1034,7 @@ def resolve_acqs(ctx_file):
             logger.info(err_msg)
             raise Exception(err_msg)
         '''
-        orbit_aoi_data = query_geojson_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson)
+        orbit_aoi_data = query_geojson_acquisitions(ctx['starttime'], ctx['endtime'], ctx['platform'], orbit_file, orbit_file_dir, threshold_pixel, acquisition_version, selected_track_list, location_geojson, tag_list)
     #osaka.main.get("http://aux.sentinel1.eo.esa.int/POEORB/2018/09/15/S1A_OPER_AUX_POEORB_OPOD_20180915T120754_V20180825T225942_20180827T005942.EOF")
     #logger.info(orbit_aoi_data)
     #exit(0)
@@ -1068,6 +1074,7 @@ def resolve_acqs(ctx_file):
     orbit_acq_selections["job_data"] = job_data
     orbit_acq_selections["orbit_aoi_data"] = orbit_aoi_data
     orbit_acq_selections["orbit_data"] = orbit_data
+    orbit_acq_selections["tag_list"] = tag_list 
 
     return orbit_acq_selections
 

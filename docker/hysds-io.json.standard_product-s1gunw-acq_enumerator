@@ -38,7 +38,7 @@
       "name": "track_numbers",
       "from": "submitter",
       "type": "text",
-      "placeholder": "comma-separated track numbers. Example : '37, 123'",
+      "placeholder": "Optional comma separated track numbers. Example : '37, 123'",
       "optional": true
     }, 
     {
@@ -46,6 +46,13 @@
       "from": "submitter",
       "type": "text",
       "placeholder": "Geosjon of the location"
+    },
+    {
+      "name": "machine_tags",
+      "from": "submitter",
+      "type": "text",
+      "placeholder": "Optional comma separated machine tags. Example: 'Tag1, Tag2'",
+      "optional": true
     },
     {
       "name": "skipDays",
