@@ -43,6 +43,8 @@ logger.addFilter(LogFilter())
 
 ACQ_LIST_ID_TMPL = "S1-GUNW-acqlist-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}"
 ACQ_RESULT_ID_TMPL = "S1-GUNW-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}-{}"
+REQUEST_ACQ_LIST_ID_TMPL = "S1-GUNW-runconfig-acqlist-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}"
+REQUEST_ACQ_RESULT_ID_TMPL = "S1-GUNW-runconfig-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}-{}"
 
 BASE_PATH = os.path.dirname(__file__)
 covth = 0.98
@@ -1026,6 +1028,7 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     direction = candidate_pair['direction']
     platform = orbit_data['platform'] 
     logger.info("publish_data : orbitNumber : %s, direction : %s" %(orbitNumber, direction))
+    is_request = is_request_acqlist()
 
     project = publish_job_data["project"] 
     '''
@@ -1156,6 +1159,10 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
 
     #ACQ_LIST_ID_TMPL = "S1-GUNW-acqlist-R{}-M{:d}S{:d}-TN{:03d}-{:%Y%m%dT%H%M%S}-{:%Y%m%dT%H%M%S}-{}-{}-{}"
     id = ACQ_LIST_ID_TMPL.format('M', len(master_acquisitions), len(slave_acquisitions), track, list_master_dt, list_slave_dt, orbit_type, id_hash[0:4])
+
+    if is_request:
+        id = REQUEST_ACQ_LIST_ID_TMPL.format('M', len(master_acquisitions), len(slave_acquisitions), track, list_master_dt, list_slave_dt, orbit_type, id_hash[0:4])
+
     #id = "acq-list-%s" %id_hash[0:4]
     prod_dir =  id
     os.makedirs(prod_dir, 0o755)
@@ -1218,7 +1225,7 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     md['slave_orbit_file'] = os.path.basename(slave_orbit_file)
     md['id_hash'] = id_hash[0:4]
     md['full_id_hash'] = id_hash
-    if len(TAG_LIST)>0:
+    if is_request:
         md['tags'] = TAG_LIST
  
     try:
@@ -1286,6 +1293,19 @@ def update_dateformat2(d):
     logger.info("update_dateformat out: %s" %d)
     return d
 
+def is_request_acqlist():
+    is_request = False
+
+    if len(TAG_LIST)==0:
+        return False
+    for tag in TAG_LIST:
+        if tag.startswith("request"):
+            is_request = True
+            break
+
+    return is_request
+
+
 
 def publish_result(reference_result, secondary_result, id_hash):
   
@@ -1295,6 +1315,7 @@ def publish_result(reference_result, secondary_result, id_hash):
     orbit_type = 'poeorb'
     aoi_id = reference_result['aoi'].strip().replace(' ', '_')
     logger.info("aoi_id : %s" %aoi_id)
+    is_request = is_request_acqlist()
 
     logger.info("secondary_result.get('master_count', 0) : %s" %secondary_result.get('master_count', 0))
     logger.info("secondary_result.get('slave_count', 0) : %s" %secondary_result.get('slave_count', 0))
@@ -1303,11 +1324,16 @@ def publish_result(reference_result, secondary_result, id_hash):
     logger.info("secondary_result.get('list_slave_dt', '') : %s" %secondary_result.get('list_slave_dt', ''))
     logger.info("%s : %s : %s" %( orbit_type, id_hash[0:4], reference_result.get('aoi', '')))
 
+    REQUEST_ACQ_RESULT_ID_TMPL = "S1-GUNW-request-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}"
     ACQ_RESULT_ID_TMPL = "S1-GUNW-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}"
     #id = ACQ_RESULT_ID_TMPL.format('M', secondary_result.get('master_count', 0), secondary_result.get('slave_count', 0), secondary_result.get('track', 0), update_dateformat2(secondary_result.get('list_master_dt', '')), update_dateformat2(secondary_result.get('list_slave_dt', '')), orbit_type, id_hash[0:4], reference_result.get('aoi', ''))
 
+    
     id = ACQ_RESULT_ID_TMPL.format('M', secondary_result.get('master_count', 0), secondary_result.get('slave_count', 0), secondary_result.get('track', 0), update_dateformat2(secondary_result.get('list_master_dt', '')), update_dateformat2(secondary_result.get('list_slave_dt', '')), orbit_type, id_hash[0:4])
-   
+    
+    if is_request:
+        id = REQUEST_ACQ_RESULT_ID_TMPL.format('M', secondary_result.get('master_count', 0), secondary_result.get('slave_count', 0), secondary_result.get('track', 0), update_dateformat2(secondary_result.get('list_master_dt', '')), update_dateformat2(secondary_result.get('list_slave_dt', '')), orbit_type, id_hash[0:4])
+ 
     logger.info("publish_result : id : %s " %id)
     #id = "acq-list-%s" %id_hash[0:4]
     prod_dir =  id
@@ -1371,7 +1397,8 @@ def publish_result(reference_result, secondary_result, id_hash):
     md['reference_scenes'] = secondary_result.get('master_scenes', [])
     md['secondary_scenes'] = secondary_result.get('slave_scenes', [])
     md['failed_orbit'] = secondary_result.get('failed_orbit', '')
-    md['tags'] = TAG_LIST
+    if is_request:
+        md['tags'] = TAG_LIST
 
     logger.info("type(md['starttime']) : %s:" %type(md['starttime']))
     logger.info("type(md['reference_date']) : %s:" %type(md['reference_date']))
