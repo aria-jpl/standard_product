@@ -975,25 +975,24 @@ def print_groups(grouped_matched):
                 print("\t\t%s" %(acq[0]))
 
 
+def get_query_by_id(id):
+    query = {
+        "query":{
+            "bool":{
+                "must":[
+                    { "term":{ "_id": id } },
+                ]
+            }
+        }
+    }
+
+    return query
+
 def get_complete_grq_data(id):
     uu = UrlUtils()
     es_url = uu.rest_url
     es_index = "grq"
-    query = {
-      "query": {
-        "bool": {
-          "must": [
-            {
-              "term": {
-                "_id": id
-              }
-            }
-          ]
-        }
-      }
-    }
-
-
+    query = get_query_by_id(id)
     print(query)
 
     if es_url.endswith('/'):

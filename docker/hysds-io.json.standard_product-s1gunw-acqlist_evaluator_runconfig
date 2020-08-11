@@ -1,0 +1,35 @@
+{     
+  "submission_type": "iteration",
+  "label": "Standard Product S1-GUNW - acqlist_evaluator_ifgcfg",
+  "allowed_accounts": [ "ops" ],
+  "enable_dedup": false,
+  "params" : [ 
+    { 
+      "name": "runconfig-topsapp_version",
+      "from": "value",
+      "value": "v2.0.0"
+    },
+    { 
+      "name": "runconfig-acqlist_version",
+      "from": "submitter",
+      "type": "text",
+      "default": "v2.0.0" 
+    },      
+    { 
+      "name": "acquisition_version",
+      "from": "submitter",
+      "type": "text",
+      "default": "v2.0" 
+    },      
+    { 
+      "name": "slc_version",
+      "from": "submitter",
+      "type": "text",
+      "default": "v1.1" 
+    },      
+    {
+      "name":"slc_id",
+      "from": "dataset_jpath:_id"
+    }
+  ]
+}

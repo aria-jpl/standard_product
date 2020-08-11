@@ -1029,6 +1029,7 @@ def publish_initiator_pair(candidate_pair, publish_job_data, orbit_data, aoi_id,
     platform = orbit_data['platform'] 
     logger.info("publish_data : orbitNumber : %s, direction : %s" %(orbitNumber, direction))
     is_request = util.is_request_acqlist(TAG_LIST)
+    logger.info("is_request is {} for TAG_LIST : {}".format(is_request, TAG_LIST)
 
     project = publish_job_data["project"] 
     '''

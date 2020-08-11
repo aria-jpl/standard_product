@@ -14,7 +14,7 @@ import backoff
 from hysds.celery import app
 from hysds.dataset_ingest import ingest
 
-from standard_product_localizer import publish_ifgcfg_data, get_acq_object
+from standard_product_localizer import publish_topsapp-runconfig_data, get_acq_object
 
 
 # set logger
@@ -142,14 +142,14 @@ def all_slcs_exist(acq_ids, acq_version, slc_version):
     return True
 
 
-def get_acqlists_by_acqid(acq_id, acqlist_version):
+def get_runconfig-acqlists_by_acqid(acq_id, runconfig-acqlist_version):
     """Return all acq-list datasets that contain the acquisition ID."""
 
     query = {
         "query": {
             "bool": {
                 "must": [
-                    {"term": {"system_version.raw": acqlist_version}},
+                    {"term": {"system_version.raw": runconfig-acqlist_version}},
                     {
                         "bool": {
                             "should": [
@@ -175,7 +175,7 @@ def get_acqlists_by_acqid(acq_id, acqlist_version):
             }
         }
     }
-    es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
+    es_index = "grq_{}_s1-gunw-acq-list".format(runconfig-acqlist_version)
     result = query_es(query, es_index)
 
     if len(result) == 0:
@@ -185,18 +185,18 @@ def get_acqlists_by_acqid(acq_id, acqlist_version):
     return [i['fields']['partial'][0] for i in result]
 
 
-def ifgcfg_exists(ifgcfg_id, version):
-    """Return True if ifg-cfg exists."""
+def runconfig_exists(runconfig_id, version):
+    """Return True if runconfig-topsapp exists."""
 
     query = {
         "query": {
             "ids": {
-                "values": [ifgcfg_id],
+                "values": [runconfig_id],
             }
         },
         "fields": []
     }
-    index = "grq_{}_s1-gunw-ifg-cfg".format(version)
+    index = "grq_{}_s1-gunw-runconfig-topsapp".format(version)
     result = query_es(query, index)
     return False if len(result) == 0 else True
 
@@ -219,11 +219,11 @@ def main():
     logger.info("acq_id: {}".format(acq_id))
 
     # pull all acq-list datasets with acquisition id in either master or slave list
-    ifgcfg_version = ctx['ifgcfg_version']
-    acqlist_version = ctx['acqlist_version']
-    acqlists = get_acqlists_by_acqid(acq_id, acqlist_version)
-    logger.info("Found {} matching acq-list datasets".format(len(acqlists)))
-    for acqlist in acqlists:
+    runconfig-topsapp_version = ctx['runconfig-topsapp_version']
+    runconfig-acqlist_version = ctx['runconfig-acqlist_version']
+    runconfig-acqlists = get_runconfig-acqlists_by_acqid(acq_id, runconfig-acqlist_version)
+    logger.info("Found {} matching acq-list datasets".format(len(runconfig-acqlists)))
+    for acqlist in runconfig-acqlists:
         logger.info(json.dumps(acqlist, indent=2))
         tag_list = acqlist['metadata'].get("tags", [])
         acq_info = {}
@@ -232,7 +232,7 @@ def main():
         for acq in acqlist['metadata']['slave_acquisitions']:
             acq_info[acq] = get_acq_object(acq, "slave")
         if all_slcs_exist(list(acq_info.keys()), acq_version, slc_version):
-            prod_dir = publish_ifgcfg_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
+            prod_dir = publish_topsapp-runconfig_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
                                     acqlist['metadata']['dem_type'], acqlist['metadata']['track_number'], acqlist['metadata']['tags'],
                                     acqlist['metadata']['starttime'], acqlist['metadata']['endtime'],
                                     acqlist['metadata']['master_scenes'], acqlist['metadata']['slave_scenes'],
@@ -242,18 +242,18 @@ def main():
                                     acqlist['metadata']['bbox'], acqlist['metadata']['full_id_hash'],
                                     acqlist['metadata']['master_orbit_file'], acqlist['metadata']['slave_orbit_file'], tag_list)
             logger.info(
-                "Created ifg-cfg {} for acq-list {}.".format(prod_dir, acqlist['id']))
-            if ifgcfg_exists(prod_dir, ifgcfg_version):
+                "Created runconfig-topsapp {} for runconfig-acqlist {}.".format(prod_dir, acqlist['id']))
+            if runconfig_exists(prod_dir, runconfig-topsapp_version):
                 logger.info(
-                    "Not ingesting ifg-cfg {}. Already exists.".format(prod_dir))
+                    "Not ingesting runconfig-topsapp {}. Already exists.".format(prod_dir))
             else:
                 ingest(prod_dir, 'datasets.json', app.conf.GRQ_UPDATE_URL,
                        app.conf.DATASET_PROCESSED_QUEUE, os.path.abspath(prod_dir), None)
-                logger.info("Ingesting ifg-cfg {}.".format(prod_dir))
+                logger.info("Ingesting runconfig-topsapp {}.".format(prod_dir))
             shutil.rmtree(prod_dir)
         else:
             logger.info(
-                "Not creating ifg-cfg for acq-list {}.".format(acqlist['id']))
+                "Not creating runconfig-topsapp for acq-list {}.".format(acqlist['id']))
 
 
 if __name__ == "__main__":

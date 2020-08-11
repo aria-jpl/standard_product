@@ -641,7 +641,10 @@ def publish_ifgcfg_data( acq_info, project, job_priority, dem_type, track, aoi_i
     """Map function for create interferogram job json creation."""
 
     id, md = get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file)
+    
+    return publish_dataset(id, md)
 
+def publish_dataset(id, md)
     prod_dir =  id
     os.makedirs(prod_dir, 0o755)
 
@@ -658,7 +661,7 @@ def publish_ifgcfg_data( acq_info, project, job_priority, dem_type, track, aoi_i
     return prod_dir
 
 
-def publish_runconfig_data( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = [], wuid=None, job_num=None):
+def publish_topsapp-runconfig_data( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = [], wuid=None, job_num=None):
     """Map function for create interferogram job json creation."""
 
     id, md = get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file)
@@ -674,20 +677,8 @@ def publish_runconfig_data( acq_info, project, job_priority, dem_type, track, ao
     data = query_es(GRQ_ES_ENDPOINT, request_id)
     md["request_metadata"] = data["metadata"]
 
-    prod_dir =  id
-    os.makedirs(prod_dir, 0o755)
+    return publish_dataset(id, md)
 
-    met_file = os.path.join(prod_dir, "{}.met.json".format(id))
-    ds_file = os.path.join(prod_dir, "{}.dataset.json".format(id))
-
-
-    with open(met_file, 'w') as f: json.dump(md, f, indent=2)
-
-
-    print("creating dataset file : %s" %ds_file)
-    create_dataset_json(id, version, met_file, ds_file)
-
-    return prod_dir
 
 def get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = []):
     logger.info("\n\n\n PUBLISH IFG JOB!!!")
