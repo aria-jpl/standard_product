@@ -1324,7 +1324,7 @@ def publish_result(reference_result, secondary_result, id_hash):
     logger.info("secondary_result.get('list_slave_dt', '') : %s" %secondary_result.get('list_slave_dt', ''))
     logger.info("%s : %s : %s" %( orbit_type, id_hash[0:4], reference_result.get('aoi', '')))
 
-    REQUEST_ACQ_RESULT_ID_TMPL = "S1-GUNW-request-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}"
+    REQUEST_ACQ_RESULT_ID_TMPL = "S1-GUNW-runconfig-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}"
     ACQ_RESULT_ID_TMPL = "S1-GUNW-acqlist-audit_trail-R{}-M{:d}S{:d}-TN{:03d}-{}-{}-{}-{}"
     #id = ACQ_RESULT_ID_TMPL.format('M', secondary_result.get('master_count', 0), secondary_result.get('slave_count', 0), secondary_result.get('track', 0), update_dateformat2(secondary_result.get('list_master_dt', '')), update_dateformat2(secondary_result.get('list_slave_dt', '')), orbit_type, id_hash[0:4], reference_result.get('aoi', ''))
 
