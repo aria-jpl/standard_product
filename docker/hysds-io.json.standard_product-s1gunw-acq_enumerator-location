@@ -1,6 +1,6 @@
 {     
   "submission_type": "iteration",
-  "label": "Standard Product S1-GUNW - aoi_track_acquisition_enumerator-location_geojson",
+  "label": "Standard Product S1-GUNW - geojson_track_acquisition_enumerator",
   "allowed_accounts": [ "ops" ],
   "enable_dedup": false,
   "params" : [ 
