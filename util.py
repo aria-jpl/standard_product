@@ -334,7 +334,7 @@ def is_request_acqlist(tag_list):
     if len(tag_list)==0:
         return False
     for tag in tag_list:
-        if "request" in tag:
+        if tag.startswith("request"):
             is_request = True
             break
 
