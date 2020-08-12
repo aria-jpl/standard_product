@@ -1,6 +1,6 @@
 {     
   "submission_type": "iteration",
-  "label": "Standard Product S1-GUNW - aoi_track_acquisition_enumerator",
+  "label": "Standard Product S1-GUNW - geojson_track_acquisition_enumerator",
   "allowed_accounts": [ "ops" ],
   "enable_dedup": false,
   "params" : [ 
@@ -38,14 +38,20 @@
       "name": "track_numbers",
       "from": "submitter",
       "type": "text",
-      "placeholder": "comma-separated track numbers. Example : '37, 123'",
+      "placeholder": "Optional comma separated track numbers. Example : '37, 123'",
       "optional": true
     }, 
     {
-      "name": "aoi_name",
+      "name": "location_geojson",
       "from": "submitter",
       "type": "text",
-      "placeholder": "comma-separated aoi dataset id. Example : 'aoi_id_1, aoi_id_2'",
+      "placeholder": "Geosjon of the location"
+    },
+    {
+      "name": "machine_tags",
+      "from": "submitter",
+      "type": "text",
+      "placeholder": "Optional comma separated machine tags. Example: 'Tag1, Tag2'",
       "optional": true
     },
     {
@@ -58,12 +64,12 @@
     },
     {
       "name": "starttime",
-      "from": "dataset_jpath:_source.starttime",
+      "from": "submitter",
       "type": "text"
     },
     {
       "name": "endtime",
-      "from": "dataset_jpath:_source.endtime",
+      "from": "submitter",
       "type": "text"
     },
     {
