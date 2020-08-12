@@ -38,7 +38,11 @@
       "destination": "context"
     },
     {
-      "name": "aoi_name",
+      "name": "location_geojson",
+      "destination": "context"
+    },
+    {
+      "name": "machine_tags",
       "destination": "context"
     },
     {

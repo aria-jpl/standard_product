@@ -40,14 +40,20 @@
       "type": "text",
       "placeholder": "comma-separated track numbers. Example : '37, 123'",
       "optional": true
-    }, 
+    },
     {
-      "name": "aoi_name",
+      "name": "location_geojson",
       "from": "submitter",
       "type": "text",
-      "placeholder": "comma-separated aoi dataset id. Example : 'aoi_id_1, aoi_id_2'",
-      "optional": true
+      "placeholder": "Geosjon of the location"
     },
+    {
+      "name": "machine_tags",
+      "from": "submitter",
+      "type": "text",
+      "placeholder": "Optional comma separated machine tags. Example: 'Tag1, Tag2'",
+      "optional": true
+    }, 
     {
       "name": "skipDays",
       "from": "submitter",
