@@ -8,62 +8,34 @@
     "$HOME/verdi/etc/settings.conf": "/home/ops/verdi/ops/standard_product/settings.conf"
   },
   "disk_usage":"100GB",
-  "soft_time_limit": 14400,
-  "time_limit": 15000,
+  "soft_time_limit": 600,
+  "time_limit": 900,
   "disk_usage": "2GB",
-  "recommended-queues": [ "aria-standard_product-enumerator" ],
+  "recommended-queues": [ "aria-standard_product-evaluator" ],
   "params" : [
     {
-      "name": "workflow",
-      "destination": "positional"
-    },
-    {
-        "name": "dataset_version",
+        "name": "output_dataset_type",
         "destination": "context"
     },
     {
-      "name": "minMatch",
-      "destination": "context"
+        "name": "output_dataset_version",
+        "destination": "context"
     },
     {
-      "name": "threshold_pixel",
+      "name": "acqlist_version",
       "destination": "context"
     },
     {
       "name": "acquisition_version",
-       "destination": "context"
-    },
-    {
-      "name": "track_numbers",
       "destination": "context"
     },
     {
-      "name": "location_geojson",
+      "name": "slc_version",
       "destination": "context"
     },
     {
-      "name": "machine_tags",
-      "destination": "context"
-    },
-    {
-      "name": "skipDays",
-      "destination": "context"
-    },
-    {
-        "name": "starttime",
-        "destination": "context"
-    },
-    {
-        "name": "endtime",
-        "destination": "context"
-    },
-    {
-        "name": "platform",
-        "destination": "context"
-    },
-    {
-      "name":"localize_products",
-      "destination":"localize"
+      "name":"slc_id",
+      "destination":"context"
     }
   ]
 }

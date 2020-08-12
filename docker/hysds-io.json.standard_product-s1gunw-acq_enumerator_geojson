@@ -1,86 +1,42 @@
 {     
   "submission_type": "iteration",
-  "label": "Standard Product S1-GUNW - geojson_track_acquisition_enumerator",
+  "label": "Standard Product S1-GUNW - acqlist_evaluator",
   "allowed_accounts": [ "ops" ],
   "enable_dedup": false,
   "params" : [ 
     {
-      "name": "workflow",
-      "from": "value",
-      "value": "orbit_acquisition_enumerator_standard_product.sf.xml"
+      "name": "output_dataset_type",
+      "from": "submitter",
+      "type": "enum",
+      "default": "ifgcfg",
+      "enumerables": ["ifgcfg", "runconfig-topsapp"]
     },
     { 
-      "name": "dataset_version",
+      "name": "output_dataset_version",
       "from": "value",
       "value": "v2.0.0"
     },
     { 
-      "name": "minMatch",
+      "name": "acqlist_version",
       "from": "submitter",
-      "type": "number",
-      "lambda": "lambda x: int(x)",
-      "default": "2"
-    },
-    {
-      "name": "threshold_pixel",
-      "from": "value",
-      "type": "number",
-      "lambda": "lambda x: int(x)",
-      "value": "5"
-    },
+      "type": "text",
+      "default": "v2.0.0" 
+    },      
     { 
       "name": "acquisition_version",
       "from": "submitter",
       "type": "text",
       "default": "v2.0" 
-    },
-    {
-      "name": "track_numbers",
+    },      
+    { 
+      "name": "slc_version",
       "from": "submitter",
       "type": "text",
-      "placeholder": "Optional comma separated track numbers. Example : '37, 123'",
-      "optional": true
-    }, 
+      "default": "v1.1" 
+    },      
     {
-      "name": "location_geojson",
-      "from": "submitter",
-      "type": "text",
-      "placeholder": "Geosjon of the location"
-    },
-    {
-      "name": "machine_tags",
-      "from": "submitter",
-      "type": "text",
-      "placeholder": "Optional comma separated machine tags. Example: 'Tag1, Tag2'",
-      "optional": true
-    },
-    {
-      "name": "skipDays",
-      "from": "submitter",
-      "type": "number",
-      "lambda": "lambda x: int(x)",
-      "default": "0",
-      "optional": true
-    },
-    {
-      "name": "starttime",
-      "from": "submitter",
-      "type": "text"
-    },
-    {
-      "name": "endtime",
-      "from": "submitter",
-      "type": "text"
-    },
-    {
-      "name": "platform",
-      "from": "dataset_jpath:_source.metadata.platform",
-      "type": "text"
-    },
-    {
-      "name":"localize_products",
-      "from": "dataset_jpath:_source",
-      "lambda": "lambda ds: list(filter(lambda x: x.startswith('s3://'), ds['urls']))[0]"
+      "name":"slc_id",
+      "from": "dataset_jpath:_id"
     }
   ]
 }
