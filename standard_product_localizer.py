@@ -644,7 +644,7 @@ def publish_ifgcfg_data( acq_info, project, job_priority, dem_type, track, aoi_i
     
     return publish_dataset(id, md)
 
-def publish_dataset(id, md)
+def publish_dataset(id, md):
     prod_dir =  id
     os.makedirs(prod_dir, 0o755)
 
@@ -661,11 +661,12 @@ def publish_dataset(id, md)
     return prod_dir
 
 
-def publish_topsapp-runconfig_data( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = [], wuid=None, job_num=None):
+def publish_topsapp_runconfig_data( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = [], wuid=None, job_num=None):
     """Map function for create interferogram job json creation."""
 
-    id, md = get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file)
+    id, md = get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, True, tag_list)
 
+    tag_list = ["test-3-request-s1gunw-xxxxx-2020-08-10T23:32:00.441180"]
     md["tags"] = tag_list
     request_id = util.get_request_id(tag_list)
     if not request_id:
@@ -680,7 +681,7 @@ def publish_topsapp-runconfig_data( acq_info, project, job_priority, dem_type, t
     return publish_dataset(id, md)
 
 
-def get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, tag_list = []):
+def get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_id, starttime, endtime, master_scene, slave_scene, master_acqs, slave_acqs, orbitNumber, direction, platform, union_geojson, bbox, ifg_hash, in_master_orbit_file, in_slave_orbit_file, is_request = False, tag_list = []):
     logger.info("\n\n\n PUBLISH IFG JOB!!!")
     logger.info("project : %s " %project)
     logger.info("dem type : %s " %dem_type)
@@ -697,6 +698,11 @@ def get_ifgcfg_metadata( acq_info, project, job_priority, dem_type, track, aoi_i
         project = project[0]
     logger.info("project : %s" %project)
     
+    # set job type and disk space reqs
+    disk_usage = "100GB"
+
+    # set job queue based on project
+    job_queue = "standard_product_s1ifg-slc_localizer"
 
     # get metadata
     master_md = { i:query_es(GRQ_ES_ENDPOINT, i) for i in master_scene}
@@ -915,6 +921,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

@@ -14,7 +14,7 @@ import backoff
 from hysds.celery import app
 from hysds.dataset_ingest import ingest
 
-from standard_product_localizer import publish_ifgcfg_data, get_acq_object
+from standard_product_localizer import publish_topsapp_runconfig_data, publish_ifgcfg_data, get_acq_object
 
 
 # set logger
@@ -276,7 +276,15 @@ def main():
     logger.info("acq_id: {}".format(acq_id))
 
     # pull all acq-list datasets with acquisition id in either master or slave list
-    output_dataset_version = ctx.get('output_dataset_version', ctx['ifgcfg_version'])
+    output_dataset_version = ctx.get('output_dataset_version', None)
+    if not output_dataset_version:
+        if 'ifgcfg_version' in ctx:
+            output_dataset_version = ctx['ifgcfg_version']
+        else:
+            err_msg = "output_dataset_version NOT found in context"
+            logger.info(err_msg)
+            raise Exception(err_msg)
+
     acqlist_version = ctx['acqlist_version']
     es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
     output_dataset_index = "grq_{}_s1-gunw-ifg-cfg".format(output_dataset_version)
@@ -308,7 +316,7 @@ def main():
                 logger.info(
                     "Created ifg-cfg {} for acq-list {}.".format(prod_dir, acqlist['id']))
             elif output_dataset_type == "runconfig-topsapp":
-                prod_dir = publish_topsapp-runconfig_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
+                prod_dir = publish_topsapp_runconfig_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
                                     acqlist['metadata']['dem_type'], acqlist['metadata']['track_number'], acqlist['metadata']['tags'],
                                     acqlist['metadata']['starttime'], acqlist['metadata']['endtime'],
                                     acqlist['metadata']['master_scenes'], acqlist['metadata']['slave_scenes'],
