@@ -184,6 +184,47 @@ def get_acqlists_by_acqid(acq_id, acqlist_version):
 
     return [i['fields']['partial'][0] for i in result]
 
+def get_acqlists_by_acqid_index(acq_id, acqlist_version, es_index):
+    """Return all acq-list datasets that contain the acquisition ID."""
+
+    query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"system_version.raw": acqlist_version}},
+                    {
+                        "bool": {
+                            "should": [
+                                {
+                                    "term": {
+                                        "metadata.master_acquisitions.raw": acq_id
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "metadata.slave_acquisitions.raw": acq_id
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                ]
+            }
+        },
+        "partial_fields": {
+            "partial": {
+                "exclude": ["city", "context", "continent"],
+            }
+        }
+    }
+    #es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
+    result = query_es(query, es_index)
+
+    if len(result) == 0:
+        logger.info("Couldn't find acq-list containing acquisition ID: {}".format(acq_id))
+        sys.exit(0)
+
+    return [i['fields']['partial'][0] for i in result]
 
 def ifgcfg_exists(ifgcfg_id, version):
     """Return True if ifg-cfg exists."""
@@ -197,6 +238,21 @@ def ifgcfg_exists(ifgcfg_id, version):
         "fields": []
     }
     index = "grq_{}_s1-gunw-ifg-cfg".format(version)
+    result = query_es(query, index)
+    return False if len(result) == 0 else True
+
+def output_dataset_exists(output_dataset_id, version, index = "grq"):
+    """Return True if ifg-cfg exists."""
+        
+    query = {
+        "query": {
+            "ids": {
+                "values": [output_dataset_id],
+            }
+        },
+        "fields": []
+    }
+    #index = "grq_{}_s1-gunw-ifg-cfg".format(version)
     result = query_es(query, index)
     return False if len(result) == 0 else True
 
@@ -215,13 +271,20 @@ def main():
     slc_id = ctx['slc_id']
     slc_version = ctx['slc_version']
     acq_version = ctx['acquisition_version']
+    output_dataset_type = ctx.get("output_dataset_type", "ifgcfg")
     acq_id = resolve_acq(slc_id, acq_version)
     logger.info("acq_id: {}".format(acq_id))
 
     # pull all acq-list datasets with acquisition id in either master or slave list
-    ifgcfg_version = ctx['ifgcfg_version']
+    output_dataset_version = ctx['output_dataset_version']
     acqlist_version = ctx['acqlist_version']
-    acqlists = get_acqlists_by_acqid(acq_id, acqlist_version)
+    es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
+    output_dataset_index = "grq_{}_s1-gunw-ifg-cfg".format(output_dataset_version)
+    if output_dataset_type == "runconfig-topsapp":
+        es_index = "grq_{}_s1-gunw-runconfig-acq-list".format(acqlist_version)
+        output_dataset_index = "grq"
+
+    acqlists = get_acqlists_by_acqid_index(acq_id, acqlist_version, es_index)
     logger.info("Found {} matching acq-list datasets".format(len(acqlists)))
     for acqlist in acqlists:
         logger.info(json.dumps(acqlist, indent=2))
@@ -232,7 +295,8 @@ def main():
         for acq in acqlist['metadata']['slave_acquisitions']:
             acq_info[acq] = get_acq_object(acq, "slave")
         if all_slcs_exist(list(acq_info.keys()), acq_version, slc_version):
-            prod_dir = publish_ifgcfg_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
+            if output_dataset_type == "ifgcfg":
+                prod_dir = publish_ifgcfg_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
                                     acqlist['metadata']['dem_type'], acqlist['metadata']['track_number'], acqlist['metadata']['tags'],
                                     acqlist['metadata']['starttime'], acqlist['metadata']['endtime'],
                                     acqlist['metadata']['master_scenes'], acqlist['metadata']['slave_scenes'],
@@ -241,19 +305,32 @@ def main():
                                     acqlist['metadata']['platform'], acqlist['metadata']['union_geojson'],
                                     acqlist['metadata']['bbox'], acqlist['metadata']['full_id_hash'],
                                     acqlist['metadata']['master_orbit_file'], acqlist['metadata']['slave_orbit_file'], tag_list)
-            logger.info(
-                "Created ifg-cfg {} for acq-list {}.".format(prod_dir, acqlist['id']))
-            if ifgcfg_exists(prod_dir, ifgcfg_version):
                 logger.info(
-                    "Not ingesting ifg-cfg {}. Already exists.".format(prod_dir))
+                    "Created ifg-cfg {} for acq-list {}.".format(prod_dir, acqlist['id']))
+            elif output_dataset_type == "runconfig-topsapp":
+                prod_dir = publish_topsapp-runconfig_data(acq_info, acqlist['metadata']['project'], acqlist['metadata']['job_priority'],
+                                    acqlist['metadata']['dem_type'], acqlist['metadata']['track_number'], acqlist['metadata']['tags'],
+                                    acqlist['metadata']['starttime'], acqlist['metadata']['endtime'],
+                                    acqlist['metadata']['master_scenes'], acqlist['metadata']['slave_scenes'],
+                                    acqlist['metadata']['master_acquisitions'], acqlist['metadata']['slave_acquisitions'],
+                                    acqlist['metadata']['orbitNumber'], acqlist['metadata']['direction'],
+                                    acqlist['metadata']['platform'], acqlist['metadata']['union_geojson'],
+                                    acqlist['metadata']['bbox'], acqlist['metadata']['full_id_hash'],
+                                    acqlist['metadata']['master_orbit_file'], acqlist['metadata']['slave_orbit_file'], tag_list)
+                logger.info(
+                    "Created runconfig-topsapp {} for runconfig-acqlist {}.".format(prod_dir, acqlist['id']))
+
+            if output_dataset_exists(prod_dir, output_dataset_version, output_dataset_index):
+                logger.info(
+                    "Not ingesting {} {}. Already exists.".format(output_dataset_type, prod_dir))
             else:
                 ingest(prod_dir, 'datasets.json', app.conf.GRQ_UPDATE_URL,
                        app.conf.DATASET_PROCESSED_QUEUE, os.path.abspath(prod_dir), None)
-                logger.info("Ingesting ifg-cfg {}.".format(prod_dir))
+                logger.info("Ingesting {} {}.".format(output_dataset_type, prod_dir))
             shutil.rmtree(prod_dir)
         else:
             logger.info(
-                "Not creating ifg-cfg for acq-list {}.".format(acqlist['id']))
+                "Not creating {} for acq-list {}.".format(output_dataset, acqlist['id']))
 
 
 if __name__ == "__main__":

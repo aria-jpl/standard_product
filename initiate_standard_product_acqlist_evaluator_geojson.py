@@ -175,7 +175,7 @@ def get_runconfig-acqlists_by_acqid(acq_id, runconfig-acqlist_version):
             }
         }
     }
-    es_index = "grq_{}_s1-gunw-acq-list".format(runconfig-acqlist_version)
+    es_index = "grq_{}_s1-gunw-runconfig-acq-list".format(runconfig-acqlist_version)
     result = query_es(query, es_index)
 
     if len(result) == 0:
