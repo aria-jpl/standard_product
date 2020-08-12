@@ -276,7 +276,7 @@ def main():
     logger.info("acq_id: {}".format(acq_id))
 
     # pull all acq-list datasets with acquisition id in either master or slave list
-    output_dataset_version = ctx['output_dataset_version']
+    output_dataset_version = ctx.get('output_dataset_version', ctx['ifgcfg_version'])
     acqlist_version = ctx['acqlist_version']
     es_index = "grq_{}_s1-gunw-acq-list".format(acqlist_version)
     output_dataset_index = "grq_{}_s1-gunw-ifg-cfg".format(output_dataset_version)
