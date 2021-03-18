@@ -4,7 +4,7 @@
   "enable_dedup": false,
   "params" : [
     {
-      "name": "factotum-job_worker-slc_sling-asf",
+      "name": "asf_ngap_download_queue",
       "from": "submitter",
       "type": "enum",
       "default": "factotum-job_worker-slc_sling-asf",
