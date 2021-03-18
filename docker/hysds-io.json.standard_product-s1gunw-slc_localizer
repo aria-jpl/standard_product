@@ -4,18 +4,18 @@
   "enable_dedup": false,
   "params" : [
     {
-      "name": "asf_ngap_download_queue",
+      "name": "factotum-job_worker-slc_sling-asf",
       "from": "submitter",
       "type": "enum",
-      "default": "slc-sling-extract-asf",
-      "enumerables": ["factotum-job_worker-large", "factotum-job_worker-small", "slc-sling-extract-asf", "factotum-job_worker-asf_throttled", "NA"]
+      "default": "factotum-job_worker-slc_sling-asf",
+      "enumerables": ["factotum-job_worker-slc_sling-asf", "slc-sling-extract-asf"]
     },
     {
       "name": "esa_download_queue",
       "from": "submitter",
       "type": "enum",
-      "default": "slc-sling-extract-scihub",
-      "enumerables": ["factotum-job_worker-large", "factotum-job_worker-small", "slc-sling-extract-scihub", "factotum-job_worker-apihub_throttled", "factotum-job_worker-scihub_throttled"]
+      "default": "factotum-job_worker-slc_sling-scihub",
+      "enumerables": ["factotum-job_worker-slc_sling-scihub", "slc-sling-extract-scihub"]
     },
     {
       "name": "spyddder_sling_extract_version",
