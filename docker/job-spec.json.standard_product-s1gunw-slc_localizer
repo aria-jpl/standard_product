@@ -8,6 +8,7 @@
     "$HOME/verdi/etc/settings.conf": "/home/ops/verdi/ops/standard_product/settings.conf"
   },
   "recommended-queues" : [
+    "factotum-job_worker-standard_product-slc_localizer",
     "aria-standard_product-localizer"
   ],
   "disk_usage":"100GB",
