@@ -11,7 +11,8 @@
   "soft_time_limit": 600,
   "time_limit": 900,
   "disk_usage": "2GB",
-  "recommended-queues": [ "aria-standard_product-evaluator" ],
+  "recommended-queues": ["factotum-job_worker-standard_product-acqlist_evaluator_ifgcfg",
+                         "aria-standard_product-evaluator"],
   "params" : [
     {
         "name": "ifgcfg_version",
